@@ -45,3 +45,4 @@ const withdrawalHistorySchema = new mongoose.Schema({
 withdrawalHistorySchema.index({ workerId: 1, date: -1 });
 
 module.exports = mongoose.model('WithdrawalHistory', withdrawalHistorySchema);
+
