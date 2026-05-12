@@ -12,3 +12,5 @@ const redemptionHistorySchema = new mongoose.Schema({
 }, { timestamps: false });
 
 module.exports = mongoose.model('RedemptionHistory', redemptionHistorySchema);
+
+// hello
