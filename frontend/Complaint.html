@@ -1,0 +1,1224 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>EcoVault — Raise a Complaint</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --g:#00d97e;--g2:#00b864;--g3:#007a42;--g4:#004d2a;
+  --dark:#060d0a;--d2:#0a1610;--d3:#0f2018;--d4:#162b1e;--d5:#1a3327;
+  --surface:#1a3327;
+  --text:#e2f0ea;--muted:#5a8a72;--dim:#3a6050;
+  --accent:#00ffaa;--acc2:#00e090;
+  --warn:#f0b429;--info:#38bdf8;--danger:#ef4444;
+  --r:10px;--r2:16px;--r3:20px;
+  --sidebar:240px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Outfit',sans-serif;background:var(--dark);color:var(--text);overflow-x:hidden;min-height:100vh;display:flex}
+
+/* ── BG ── */
+.map-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.map-bg svg{width:100%;height:100%;opacity:0.07}
+.scan-line{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,217,126,0.3),transparent);animation:scan 10s linear infinite}
+@keyframes scan{0%{top:-1%}100%{top:101%}}
+
+/* ── SIDEBAR ── */
+.user-pts {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+  margin-top: 10px;
+  padding-top: 10px;
+  border-top: 1px solid rgba(255,255,255,0.05);
+}
+.pts-badge {
+  display: flex;
+  align-items: center;
+  gap: 4px;
+  background: rgba(0,217,126,0.1);
+  border: 1px solid rgba(0,217,126,0.2);
+  border-radius: 6px;
+  padding: 4px 8px;
+  font-size: 12px;
+  font-weight: 700;
+  color: var(--g);
+  font-family: 'JetBrains Mono', monospace;
+  white-space: nowrap;
+}
+.tier-inline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  border: 1px solid transparent;
+  white-space: nowrap;
+}
+.sidebar{
+  width:var(--sidebar);min-width:var(--sidebar);
+  height:100vh;position:sticky;top:0;
+  background:rgba(10,22,16,0.95);
+  border-right:1px solid rgba(0,217,126,0.1);
+  display:flex;flex-direction:column;
+  padding:0;z-index:10;backdrop-filter:blur(20px);
+}
+.sidebar-brand{padding:20px 20px 0;border-bottom:1px solid rgba(0,217,126,0.08);margin-bottom:8px}
+.brand-row{display:flex;align-items:center;gap:9px;margin-bottom:20px}
+.brand-ico{width:32px;height:32px;background:var(--g);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.brand-name{font-size:17px;font-weight:800;color:var(--text)}
+.brand-name span{color:var(--g)}
+.user-card{margin:0 12px 8px;padding:14px;background:var(--d4);border-radius:var(--r2);border:1px solid rgba(0,217,126,0.1)}
+.user-avatar{width:40px;height:40px;border-radius:50%;background:linear-gradient(135deg,var(--g3),var(--g2));display:flex;align-items:center;justify-content:center;font-size:16px;font-weight:700;color:#fff;margin-bottom:10px;border:2px solid rgba(0,217,126,0.3)}
+.user-name{font-size:14px;font-weight:700;color:var(--text)}
+.user-id{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.nav-section{padding:4px 12px;margin-top:4px;flex:1;overflow-y:auto}
+.nav-sec-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);font-family:'JetBrains Mono',monospace;padding:8px 8px 6px}
+.nav-item{display:flex;align-items:center;gap:10px;padding:10px 12px;border-radius:var(--r);color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left}
+.nav-item:hover{background:rgba(0,217,126,0.06);color:var(--text)}
+.nav-item.active{background:rgba(239,68,68,0.08);color:#ef4444;border:1px solid rgba(239,68,68,0.2)}
+.nav-icon{font-size:15px;width:20px;text-align:center}
+.sidebar-bottom{padding:12px;border-top:1px solid rgba(0,217,126,0.08)}
+.back-btn{display:flex;align-items:center;gap:10px;width:100%;padding:10px 12px;border-radius:var(--r);background:rgba(0,217,126,0.06);border:1px solid rgba(0,217,126,0.15);color:var(--g);font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.back-btn:hover{background:rgba(0,217,126,0.12)}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;min-height:100vh;position:relative;z-index:2;overflow:hidden}
+.topbar{height:60px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(6,13,10,0.85);border-bottom:1px solid rgba(239,68,68,0.15);backdrop-filter:blur(16px);position:sticky;top:0;z-index:9;flex-shrink:0}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.page-title{font-size:16px;font-weight:700;color:var(--text)}
+.breadcrumb{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.logout-btn{display:flex;align-items:center;gap:8px;padding:8px 14px;border-radius:var(--r);background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.12);color:rgba(239,68,68,0.7);font-family:'Outfit',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s}
+.logout-btn:hover{background:rgba(239,68,68,0.12);color:var(--danger)}
+.topbar-avatar{width:36px;height:36px;border-radius:50%;background:linear-gradient(135deg,var(--g3),var(--g2));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;border:2px solid rgba(0,217,126,0.3)}
+
+/* ── CONTENT ── */
+.content{padding:28px;display:flex;flex-direction:column;gap:24px;flex:1;overflow-y:auto}
+
+/* ── HERO BANNER ── */
+.complaint-hero{
+  background:linear-gradient(135deg,rgba(239,68,68,0.08) 0%,rgba(15,32,24,0.95) 60%);
+  border:1px solid rgba(239,68,68,0.18);
+  border-radius:var(--r3);padding:28px 32px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:relative;overflow:hidden;
+}
+.complaint-hero::before{content:'';position:absolute;right:-60px;top:-60px;width:200px;height:200px;border-radius:50%;background:radial-gradient(circle,rgba(239,68,68,0.12) 0%,transparent 70%)}
+.hero-left h2{font-size:24px;font-weight:900;margin-bottom:6px}
+.hero-left h2 span{color:var(--danger)}
+.hero-left p{font-size:13px;color:var(--muted);line-height:1.6;max-width:480px}
+.hero-stat{text-align:right}
+.hero-stat-val{font-size:36px;font-weight:900;color:var(--danger);letter-spacing:-1px;line-height:1}
+.hero-stat-lbl{font-size:11px;color:var(--muted);margin-top:4px;font-family:'JetBrains Mono',monospace}
+
+/* ── PANEL ── */
+.panel{background:var(--d3);border-radius:var(--r2);border:1px solid rgba(255,255,255,0.05);overflow:hidden}
+.panel-header{padding:14px 20px;border-bottom:1px solid rgba(255,255,255,0.05);display:flex;align-items:center;justify-content:space-between}
+.panel-title{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.panel-tag{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);padding:2px 8px;border-radius:4px}
+.panel-tag.red{background:rgba(239,68,68,0.08);border-color:rgba(239,68,68,0.2);color:#ef4444}
+
+/* ── MAIN GRID ── */
+.main-grid{display:grid;grid-template-columns:1fr 400px;gap:22px;align-items:start}
+
+/* ── FORM ── */
+.form-body{padding:22px}
+.form-row{margin-bottom:16px}
+.form-row label{font-size:11px;color:var(--muted);font-weight:600;display:block;margin-bottom:6px;font-family:'JetBrains Mono',monospace;letter-spacing:0.5px;text-transform:uppercase}
+.form-row label span.req{color:var(--danger)}
+.form-row input,.form-row select,.form-row textarea{
+  width:100%;padding:11px 14px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:9px;color:var(--text);
+  font-family:'Outfit',sans-serif;font-size:14px;
+  outline:none;transition:border-color 0.2s;resize:vertical;
+}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:rgba(239,68,68,0.4)}
+.form-row input::placeholder,.form-row textarea::placeholder{color:var(--dim)}
+.form-row select option{background:var(--d3)}
+.form-grid-2{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.char-counter{font-size:10px;color:var(--dim);text-align:right;margin-top:4px;font-family:'JetBrains Mono',monospace}
+.submit-complaint-btn{
+  width:100%;padding:13px;border-radius:10px;
+  background:var(--danger);color:#fff;
+  border:none;font-family:'Outfit',sans-serif;
+  font-size:15px;font-weight:700;cursor:pointer;
+  transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:8px;
+  margin-top:4px;
+}
+.submit-complaint-btn:hover{background:#dc2626;transform:translateY(-1px);box-shadow:0 8px 24px rgba(239,68,68,0.3)}
+.submit-complaint-btn:disabled{opacity:0.45;cursor:not-allowed;transform:none;box-shadow:none}
+.form-notice{display:flex;align-items:flex-start;gap:10px;padding:12px 14px;background:rgba(240,180,41,0.06);border:1px solid rgba(240,180,41,0.15);border-radius:9px;margin-top:14px;font-size:12px;color:var(--muted);line-height:1.6}
+.form-notice-ico{font-size:16px;flex-shrink:0;margin-top:1px}
+
+/* ── RIGHT COLUMN ── */
+.right-col{display:flex;flex-direction:column;gap:18px}
+
+/* ── STATS MINI ── */
+.mini-stats{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+.mini-stat{background:var(--d3);border:1px solid rgba(255,255,255,0.05);border-radius:var(--r2);padding:16px 18px;position:relative;overflow:hidden}
+.mini-stat::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0}
+.mini-stat.red::after{background:linear-gradient(90deg,#7f1d1d,var(--danger))}
+.mini-stat.amber::after{background:linear-gradient(90deg,#92400e,var(--warn))}
+.mini-stat.blue::after{background:linear-gradient(90deg,#0c4a6e,var(--info))}
+.mini-stat.green::after{background:linear-gradient(90deg,var(--g3),var(--g))}
+.ms-label{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:8px}
+.ms-val{font-size:28px;font-weight:900;letter-spacing:-1px;line-height:1}
+.ms-val.red{color:var(--danger)}.ms-val.amber{color:var(--warn)}.ms-val.blue{color:var(--info)}.ms-val.green{color:var(--g)}
+
+/* ── GUIDELINES PANEL ── */
+.guideline-list{padding:16px 20px;display:flex;flex-direction:column;gap:10px}
+.gl-item{display:flex;align-items:flex-start;gap:10px;padding:10px 12px;background:rgba(255,255,255,0.02);border:1px solid rgba(255,255,255,0.05);border-radius:9px}
+.gl-ico{font-size:18px;flex-shrink:0;margin-top:1px}
+.gl-text{font-size:12px;color:var(--muted);line-height:1.6}
+.gl-text strong{color:var(--text);display:block;margin-bottom:2px;font-size:13px}
+
+/* ── TABS ── */
+.tabs-row{display:flex;gap:4px;padding:14px 20px 0}
+.tab-btn{padding:8px 18px;border-radius:8px 8px 0 0;border:none;background:rgba(255,255,255,0.04);color:var(--muted);font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;border:1px solid transparent;border-bottom:none}
+.tab-btn.active{background:var(--d3);color:var(--text);border-color:rgba(255,255,255,0.07)}
+.tab-btn.active.red{color:var(--danger);border-color:rgba(239,68,68,0.2)}
+.tab-btn.active.green{color:var(--g);border-color:rgba(0,217,126,0.2)}
+
+/* ── COMPLAINT LIST ── */
+.complaints-section{display:flex;flex-direction:column;gap:0}
+.complaint-list-wrap{min-height:200px}
+.complaint-item{
+  display:flex;align-items:flex-start;gap:14px;
+  padding:16px 20px;border-bottom:1px solid rgba(255,255,255,0.04);
+  transition:background 0.2s;cursor:pointer;
+}
+.complaint-item:last-child{border-bottom:none}
+.complaint-item:hover{background:rgba(239,68,68,0.03)}
+.ci-icon{width:40px;height:40px;border-radius:10px;display:flex;align-items:center;justify-content:center;font-size:18px;flex-shrink:0}
+.ci-icon.open{background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2)}
+.ci-icon.under_review{background:rgba(240,180,41,0.1);border:1px solid rgba(240,180,41,0.2)}
+.ci-icon.resolved{background:rgba(0,217,126,0.1);border:1px solid rgba(0,217,126,0.2)}
+.ci-icon.closed{background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08)}
+.ci-body{flex:1;min-width:0}
+.ci-header{display:flex;align-items:center;justify-content:space-between;gap:10px;margin-bottom:4px}
+.ci-title{font-size:13px;font-weight:700;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-ref{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.ci-meta{font-size:11px;color:var(--muted);margin-bottom:6px}
+.ci-desc{font-size:12px;color:var(--dim);line-height:1.5;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.ci-footer{display:flex;align-items:center;gap:8px;margin-top:8px;flex-wrap:wrap}
+.status-pill{padding:3px 10px;border-radius:100px;font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;white-space:nowrap}
+.pill-open{background:rgba(239,68,68,0.1);color:var(--danger);border:1px solid rgba(239,68,68,0.2)}
+.pill-review{background:rgba(240,180,41,0.1);color:var(--warn);border:1px solid rgba(240,180,41,0.2)}
+.pill-resolved{background:rgba(0,217,126,0.1);color:var(--g);border:1px solid rgba(0,217,126,0.2)}
+.pill-closed{background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid rgba(255,255,255,0.08)}
+.cat-pill{padding:3px 10px;border-radius:100px;font-size:10px;color:var(--info);background:rgba(56,189,248,0.07);border:1px solid rgba(56,189,248,0.15)}
+.empty-state{padding:60px 20px;text-align:center;color:var(--muted)}
+.empty-ico{font-size:48px;margin-bottom:14px;opacity:0.4}
+.empty-title{font-size:16px;font-weight:700;color:var(--text);margin-bottom:6px}
+.empty-sub{font-size:13px;line-height:1.6}
+.loading-state{padding:40px;text-align:center;color:var(--muted);font-size:13px}
+
+/* ── DETAIL MODAL ── */
+.overlay{position:fixed;inset:0;z-index:300;background:rgba(0,0,0,0.78);backdrop-filter:blur(10px);display:none;align-items:center;justify-content:center;padding:20px;overflow-y:auto}
+.overlay.open{display:flex;animation:fadeIn 0.2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal-box{background:var(--d2);border:1px solid rgba(239,68,68,0.2);border-radius:22px;width:100%;max-width:520px;overflow:hidden;animation:modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both;margin:auto}
+@keyframes modalIn{from{transform:scale(0.88) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.modal-bar{height:3px;background:linear-gradient(90deg,#7f1d1d,var(--danger),#f87171)}
+.modal-inner{padding:28px}
+.modal-close{position:absolute;top:14px;right:14px;width:30px;height:30px;border-radius:8px;background:rgba(255,255,255,0.05);border:1px solid rgba(255,255,255,0.08);color:var(--muted);font-size:15px;cursor:pointer;display:flex;align-items:center;justify-content:center;transition:all 0.2s;z-index:10}
+.modal-close:hover{background:rgba(239,68,68,0.12);color:var(--danger)}
+.modal-box{position:relative}
+.detail-ref{font-size:11px;color:var(--danger);font-family:'JetBrains Mono',monospace;margin-bottom:8px}
+.detail-title{font-size:20px;font-weight:800;margin-bottom:14px;line-height:1.3}
+.detail-chips{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:18px}
+.detail-field{margin-bottom:14px}
+.detail-label{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:5px}
+.detail-val{font-size:13px;color:var(--text);background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:8px;padding:10px 12px;line-height:1.6}
+.detail-note{background:rgba(0,217,126,0.06);border:1px solid rgba(0,217,126,0.18);border-radius:8px;padding:12px;font-size:13px;color:var(--text);line-height:1.6}
+.withdraw-btn{width:100%;padding:11px;border-radius:9px;background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.2);color:var(--danger);font-family:'Outfit',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;margin-top:16px}
+.withdraw-btn:hover{background:rgba(239,68,68,0.15)}
+.withdraw-btn:disabled{opacity:0.35;cursor:not-allowed}
+
+/* ── SUCCESS OVERLAY ── */
+.success-overlay{position:fixed;inset:0;z-index:400;background:rgba(0,0,0,0.8);backdrop-filter:blur(12px);display:none;align-items:center;justify-content:center;padding:20px}
+.success-overlay.open{display:flex;animation:fadeIn 0.2s ease}
+.success-modal{background:var(--d2);border:1px solid rgba(0,217,126,0.25);border-radius:22px;width:100%;max-width:420px;overflow:hidden;text-align:center;animation:modalIn 0.35s cubic-bezier(0.34,1.56,0.64,1) both}
+.success-bar{height:3px;background:linear-gradient(90deg,var(--g3),var(--g),var(--acc2))}
+.success-inner{padding:36px 32px}
+.success-ico{font-size:52px;margin-bottom:16px}
+.success-title{font-size:22px;font-weight:800;margin-bottom:8px}
+.success-sub{font-size:13px;color:var(--muted);line-height:1.7;margin-bottom:20px}
+.ref-box{background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.2);border-radius:9px;padding:12px;margin-bottom:22px;font-family:'JetBrains Mono',monospace;font-size:14px;font-weight:700;color:var(--danger)}
+.ref-label{font-size:10px;color:var(--muted);margin-bottom:4px;font-family:'Outfit',sans-serif;font-weight:500}
+.success-btn{width:100%;padding:13px;border-radius:10px;background:var(--g);color:var(--dark);border:none;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s}
+.success-btn:hover{background:var(--acc2)}
+
+/* ── TOAST ── */
+.toast{position:fixed;bottom:24px;right:24px;z-index:500;background:var(--d2);border:1px solid rgba(0,217,126,0.25);border-radius:var(--r2);padding:14px 18px;display:flex;align-items:center;gap:12px;box-shadow:0 12px 40px rgba(0,0,0,0.5);transform:translateX(120%);transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);max-width:320px}
+.toast.show{transform:translateX(0)}
+.toast-ico{font-size:22px}
+.toast-title{font-size:13px;font-weight:700;color:var(--text)}
+.worker-valid{background:rgba(0,217,126,0.08);border:1px solid rgba(0,217,126,0.3);color:var(--g)}
+.worker-invalid{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#ef4444}
+.worker-checking{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--muted)}
+input.input-error{border-color:rgba(239,68,68,0.5)!important;background:rgba(239,68,68,0.04)!important}
+input.input-valid{border-color:rgba(0,217,126,0.4)!important}
+.toast-msg{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* ── SCROLLBAR ── */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(0,217,126,0.2);border-radius:4px}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(14px)}to{opacity:1;transform:translateY(0)}}
+
+@media(max-width:1100px){.main-grid{grid-template-columns:1fr}}
+@media(max-width:900px){.sidebar{display:none}.mini-stats{grid-template-columns:1fr 1fr}}
+.worker-valid{background:rgba(0,217,126,0.08);border:1px solid rgba(0,217,126,0.3);color:var(--g)}
+.worker-invalid{background:rgba(239,68,68,0.08);border:1px solid rgba(239,68,68,0.3);color:#ef4444}
+.worker-checking{background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.1);color:var(--muted)}
+input.input-error{border-color:rgba(239,68,68,0.5)!important;background:rgba(239,68,68,0.04)!important}
+input.input-valid{border-color:rgba(0,217,126,0.4)!important}
+
+/* ════════════════════════════════
+   MOBILE SIDEBAR — hamburger drawer
+   ════════════════════════════════ */
+
+/* Hamburger button — hidden on desktop */
+.hamburger-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+  width: 40px; height: 40px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(0,217,126,0.25);
+  border-radius: 10px;
+  cursor: pointer;
+  padding: 10px;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s;
+}
+.hamburger-btn:hover {
+  background: rgba(0,217,126,0.1);
+  border-color: rgba(0,217,126,0.5);
+}
+.hamburger-btn span {
+  display: block;
+  width: 18px; height: 2px;
+  background: var(--g);
+  border-radius: 2px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  transform-origin: center;
+}
+.hamburger-btn.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger-btn.is-open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger-btn.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Dark overlay behind the drawer */
+#sidebarOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: rgba(0,0,0,0);
+  transition: background 0.32s ease;
+  pointer-events: none;
+}
+#sidebarOverlay.visible {
+  background: rgba(0,0,0,0.65);
+  pointer-events: all;
+}
+
+/* ── Mobile breakpoint ── */
+@media (max-width: 768px) {
+  .hamburger-btn { display: flex; }
+
+  /* Sidebar becomes a fixed off-canvas drawer */
+  .sidebar {
+    display: flex !important;
+    position: fixed !important;
+    left: -270px !important;
+    top: 0; bottom: 0;
+    width: 260px !important;
+    min-width: 260px !important;
+    height: 100dvh !important;
+    z-index: 200 !important;
+    transition: left 0.32s cubic-bezier(0.4,0,0.2,1) !important;
+    box-shadow: none;
+    overflow-y: auto;
+  }
+  .sidebar.drawer-open {
+    left: 0 !important;
+    box-shadow: 6px 0 40px rgba(0,0,0,0.7) !important;
+  }
+
+  /* Show the overlay */
+  #sidebarOverlay { display: block; }
+
+  /* Body: keep flex but don't let sidebar take space */
+  body { overflow-x: hidden; }
+
+  /* Main content fills full width */
+  .main {
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden;
+  }
+
+  /* Topbar */
+  .topbar { padding: 0 12px !important; }
+  .topbar-left { gap: 8px !important; }
+  .page-title { font-size: 14px !important; }
+  .breadcrumb { display: none !important; }
+  .topbar-right { gap: 8px !important; }
+  .logout-btn { font-size: 12px !important; padding: 6px 10px !important; }
+  .status-pill { display: none !important; }
+
+  /* Content padding tighter */
+  .content { padding: 14px !important; gap: 14px !important; }
+
+  /* Stat cards — 2 columns */
+  .stats-row { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .stat-card { padding: 13px !important; min-height: 88px !important; }
+  .stat-val { font-size: 24px !important; }
+  .stat-eyebrow { font-size: 10px !important; }
+  .stat-icon { font-size: 22px !important; }
+
+  /* Main grid: single column */
+  .main-grid { grid-template-columns: 1fr !important; gap: 14px !important; }
+
+  /* Map */
+  .map-area, #leafletMap { height: 220px !important; }
+
+  /* Form layout */
+  .form-grid-2 { grid-template-columns: 1fr !important; }
+
+  /* Points */
+  .pts-big { font-size: 36px !important; }
+  .pts-tier { flex-wrap: wrap !important; }
+  .tier-chip { min-width: 44% !important; }
+
+  /* Hero banners */
+  .complaint-hero, .redeem-hero {
+    flex-direction: column !important;
+    gap: 12px !important;
+    padding: 18px !important;
+    align-items: flex-start !important;
+  }
+  .hero-right, .hero-stat { text-align: left !important; }
+  .hero-pts-big, .hero-stat-val { font-size: 30px !important; }
+  .hero-left h2 { font-size: 19px !important; }
+  .hero-left p { font-size: 12px !important; }
+
+  /* Coupon grid */
+  .coupons-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+
+  /* Mini stats */
+  .mini-stats { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .ms-val { font-size: 22px !important; }
+
+  /* Filter chips */
+  .filter-row { gap: 6px !important; flex-wrap: wrap !important; }
+  .filter-chip { padding: 6px 12px !important; font-size: 11px !important; }
+
+  /* Right column */
+  .right-col { gap: 14px !important; }
+
+  /* Profile popover */
+  .profile-popover { right: 8px !important; left: 8px !important; width: auto !important; }
+
+  /* Redeem modal */
+  .redeem-modal-box { width: 95vw !important; padding: 18px !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- BG -->
+<div class="map-bg">
+  <svg viewBox="0 0 1440 900" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="g1" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M60 0L0 0 0 60" fill="none" stroke="rgba(0,217,126,0.2)" stroke-width="0.5"/></pattern>
+      <pattern id="g2" width="300" height="300" patternUnits="userSpaceOnUse"><path d="M300 0L0 0 0 300" fill="none" stroke="rgba(0,217,126,0.3)" stroke-width="1"/></pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#g1)"/>
+    <rect width="100%" height="100%" fill="url(#g2)"/>
+  </svg>
+  <div class="scan-line"></div>
+</div>
+
+<!-- SIDEBAR -->
+<div id="sidebarOverlay"></div>
+  <aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-row">
+      <div class="brand-ico">♻</div>
+      <div class="brand-name">Eco<span>Vault</span></div>
+    </div>
+  </div>
+  <div style="padding:12px 12px 8px">
+    <div class="user-card">
+      <div class="user-avatar" id="sidebarAvatar">?</div>
+      <div class="user-name" id="sidebarName">—</div>
+      <div class="user-id" id="sidebarId">—</div>
+      <div class="user-pts">
+        <div class="pts-badge"><span id="sidebarPts">0</span> pts</div>
+        <div class="tier-inline-badge" id="sidebarTierBadge">—</div>
+      </div>
+    </div>
+
+  </div>
+  <div class="nav-section">
+    <div class="nav-sec-label">Main</div>
+    <button class="nav-item" onclick="window.location.href='citizenDASH.html'"><span class="nav-icon">📊</span>Dashboard</button>
+    <button class="nav-item" onclick="window.location.href='citizenDASH.html'"><span class="nav-icon">📍</span>Submit Report</button>
+    <button class="nav-item" onclick="window.location.href='citizenDASH.html'"><span class="nav-icon">📋</span>My Requests</button>
+    <button class="nav-item" onclick="window.location.href='citizenDASH.html'"><span class="nav-icon">🌿</span>Green Points</button>
+    <button class="nav-item" onclick="window.location.href='redeemPoints.html'"><span class="nav-icon">🎁</span>Redeem Points</button>
+    <button class="nav-item" onclick="window.location.href='citizenDASH.html'"><span class="nav-icon">🗺️</span>Live Map</button>
+    <button class="nav-item active"><span class="nav-icon">🚨</span>Raise Complaint</button>
+  </div>
+  
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open navigation"><span></span><span></span><span></span></button>
+      <div>
+        <div class="page-title">Raise a Complaint</div>
+        <div class="breadcrumb">EcoVault / Dashboard / Complaints</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <button class="logout-btn" onclick="logout()"><span>🚪</span> Logout</button>
+      <div class="topbar-avatar" id="topbarAvatar">?</div>
+    </div>
+  </div>
+
+  <!-- CONTENT -->
+  <div class="content">
+
+    <!-- HERO -->
+    <div class="complaint-hero">
+      <div class="hero-left">
+        <h2>Have an issue? <span>We'll act on it.</span></h2>
+        <p>File a complaint against a field worker, service quality, or any operational issue. Our admin team reviews every complaint and takes action within 48 hours.</p>
+      </div>
+      <div class="hero-stat">
+        <div class="hero-stat-val" id="heroOpenCount">—</div>
+        <div class="hero-stat-lbl">YOUR OPEN COMPLAINTS</div>
+      </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="main-grid">
+
+      <!-- LEFT: FORM + HISTORY -->
+      <div style="display:flex;flex-direction:column;gap:20px">
+
+        <!-- FORM PANEL -->
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">🚨 New Complaint</div>
+            <div class="panel-tag red">SUBMIT</div>
+          </div>
+          <div class="form-body">
+
+            <div class="form-row">
+              <label>Complaint Title <span class="req">*</span></label>
+              <input type="text" id="cTitle" placeholder="Short summary of your complaint" maxlength="120"/>
+            </div>
+
+            <div class="form-grid-2">
+              <div class="form-row" style="margin-bottom:0">
+                <label>Category <span class="req">*</span></label>
+                <select id="cCategory" onchange="onAgainstInput()">
+                  <option value="">— Select category —</option>
+                  <option value="Worker Misconduct">Worker Misconduct</option>
+                  <option value="Missed Pickup">Missed Pickup</option>
+                  <option value="Improper Disposal">Improper Disposal</option>
+                  <option value="Damage to Property">Damage to Property</option>
+                  <option value="Rude Behaviour">Rude Behaviour</option>
+                  <option value="No Action on Report">No Action on Report</option>
+                  <option value="Other">Other</option>
+                </select>
+              </div>
+              <div class="form-row" style="margin-bottom:0">
+                <label>Complaint Against <span class="req">*</span></label>
+                <input type="text" id="cAgainst" placeholder='Worker ID (e.g. WRK001) or "General"'
+                  oninput="onAgainstInput()"
+                  onblur="validateAgainstField()"/>
+                <div id="workerValidationMsg" style="display:none;margin-top:5px;font-size:11px;font-family:'JetBrains Mono',monospace;padding:6px 10px;border-radius:6px;"></div>
+                <div style="margin-top:4px;font-size:10px;color:var(--muted)">Enter a valid Worker ID for worker-related complaints, or type <strong style="color:var(--text)">General</strong> for service issues.</div>
+              </div>
+            </div>
+
+
+            <div class="form-row">
+              <label>Detailed Description <span class="req">*</span></label>
+              <textarea id="cDescription" rows="5" placeholder="Describe the issue in detail — include time, location, and any relevant context..." maxlength="1000" oninput="updateCharCount(this)"></textarea>
+              <div class="char-counter"><span id="charCount">0</span> / 1000</div>
+            </div>
+
+            <button class="submit-complaint-btn" id="submitComplaintBtn" onclick="handleSubmit()">
+              <span>🚨</span> Submit Complaint
+            </button>
+
+            <div class="form-notice">
+              <span class="form-notice-ico">⚠️</span>
+              <span>False or malicious complaints may result in a warning on your account. All complaints are reviewed by our admin team within 48 hours.</span>
+            </div>
+          </div>
+        </div>
+
+        <!-- COMPLAINTS HISTORY -->
+        <div class="panel">
+          <div class="tabs-row">
+            <button class="tab-btn active red" id="tabOpen" onclick="switchTab('open')">Open & Under Review</button>
+            <button class="tab-btn active green" id="tabResolved" onclick="switchTab('resolved')" style="background:rgba(255,255,255,0.02);color:var(--muted);border-color:transparent">Resolved</button>
+          </div>
+          <div class="panel-header" style="border-top:1px solid rgba(255,255,255,0.05)">
+            <div class="panel-title">📋 My Complaints</div>
+            <div class="panel-tag" id="listCount">Loading…</div>
+          </div>
+          <div class="complaint-list-wrap" id="complaintListWrap">
+            <div class="loading-state">⏳ Loading your complaints…</div>
+          </div>
+        </div>
+
+      </div>
+
+      <!-- RIGHT: STATS + GUIDELINES -->
+      <div class="right-col">
+
+        <div class="mini-stats">
+          <div class="mini-stat red">
+            <div class="ms-label">Open</div>
+            <div class="ms-val red" id="statOpen">—</div>
+          </div>
+          <div class="mini-stat amber">
+            <div class="ms-label">Under Review</div>
+            <div class="ms-val amber" id="statReview">—</div>
+          </div>
+          <div class="mini-stat green">
+            <div class="ms-label">Resolved</div>
+            <div class="ms-val green" id="statResolved">—</div>
+          </div>
+          <div class="mini-stat blue">
+            <div class="ms-label">Total Filed</div>
+            <div class="ms-val blue" id="statTotal">—</div>
+          </div>
+        </div>
+
+        <div class="panel">
+          <div class="panel-header">
+            <div class="panel-title">📌 Guidelines</div>
+          </div>
+          <div class="guideline-list">
+            <div class="gl-item">
+              <span class="gl-ico">✅</span>
+              <div class="gl-text"><strong>Be Specific</strong>Include the worker ID, date, time, and exact location for faster resolution.</div>
+            </div>
+            <div class="gl-item">
+              <span class="gl-ico">⏱️</span>
+              <div class="gl-text"><strong>48-Hour Review</strong>Our admin team will review and respond to all complaints within 48 hours.</div>
+            </div>
+            <div class="gl-item">
+              <span class="gl-ico">🔒</span>
+              <div class="gl-text"><strong>Confidential</strong>Your complaint details are kept confidential and only shared with relevant administrators.</div>
+            </div>
+            <div class="gl-item">
+              <span class="gl-ico">⚠️</span>
+              <div class="gl-text"><strong>No False Complaints</strong>Filing a false complaint is a violation of EcoVault's terms of service.</div>
+            </div>
+          </div>
+        </div>
+
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DETAIL MODAL -->
+<div class="overlay" id="detailOverlay" onclick="overlayClick(event)">
+  <div class="modal-box" id="detailModal">
+    <div class="modal-bar"></div>
+    <button class="modal-close" onclick="closeDetailModal()">✕</button>
+    <div class="modal-inner">
+      <div class="detail-ref" id="dRef">—</div>
+      <div class="detail-title" id="dTitle">—</div>
+      <div class="detail-chips" id="dChips"></div>
+      <div class="detail-field">
+        <div class="detail-label">Complaint Against</div>
+        <div class="detail-val" id="dAgainst">—</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Description</div>
+        <div class="detail-val" id="dDesc">—</div>
+      </div>
+      <div class="detail-field">
+        <div class="detail-label">Date Filed</div>
+        <div class="detail-val" id="dDate">—</div>
+      </div>
+      <div id="dAdminNoteWrap" style="display:none">
+        <div class="detail-label" style="margin-bottom:6px">Admin Response</div>
+        <div class="detail-note" id="dAdminNote">—</div>
+      </div>
+      <button class="withdraw-btn" id="withdrawBtn" onclick="handleWithdraw()">🗑️ Withdraw Complaint</button>
+    </div>
+  </div>
+</div>
+
+<!-- SUCCESS OVERLAY -->
+<div class="success-overlay" id="successOverlay">
+  <div class="success-modal">
+    <div class="success-bar"></div>
+    <div class="success-inner">
+      <div class="success-ico">✅</div>
+      <div class="success-title">Complaint Submitted!</div>
+      <div class="success-sub">Your complaint has been filed and assigned a reference number. Our admin team will review it within 48 hours.</div>
+      <div class="ref-box">
+        <div class="ref-label">Reference Number</div>
+        <div id="successRef">—</div>
+      </div>
+      <button class="success-btn" onclick="closeSuccessModal()">👍 Done</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-ico" id="toastIco">✅</div>
+  <div>
+    <div class="toast-title" id="toastTitle">Done!</div>
+    <div class="toast-msg" id="toastMsg"></div>
+  </div>
+</div>
+
+<script>
+// Auth Guard: Only citizens can access this page
+(function() {
+  const role = localStorage.getItem('userRole');
+  if (role !== 'citizen') {
+    window.location.href = 'welcome_page-dynamic.html';
+  }
+})();
+
+// ── COMPLAINT API FUNCTIONS ──
+const COMPLAINT_API_BASE = 'http://127.0.0.1:5000/api/complaints';
+
+async function submitComplaint(payload) {
+  try {
+    // Force-feed the backend using URLSearchParams to bypass any JSON parsing quirks
+    const params = new URLSearchParams(payload);
+    
+    const response = await fetch(`${COMPLAINT_API_BASE}/submit`, {
+      method: 'POST',
+      headers: { 
+        'Content-Type': 'application/x-www-form-urlencoded' 
+      },
+      body: params.toString()
+    });
+    return await response.json();
+  } catch (err) {
+    console.error('[complaint-api] submitComplaint error:', err);
+    return { success: false, message: 'Server connection failed. Is the backend running?' };
+  }
+}
+
+async function fetchMyComplaints(citizenId) {
+  try {
+    const response = await fetch(`${COMPLAINT_API_BASE}/my/${citizenId}`);
+    return await response.json();
+  } catch (err) {
+    console.error('[complaint-api] fetchMyComplaints error:', err);
+    return { success: false, complaints: [], message: 'Failed to load complaints.' };
+  }
+}
+
+async function fetchComplaintById(complaintId) {
+  try {
+    const response = await fetch(`${COMPLAINT_API_BASE}/${complaintId}`);
+    return await response.json();
+  } catch (err) {
+    console.error('[complaint-api] fetchComplaintById error:', err);
+    return { success: false, message: 'Failed to fetch complaint.' };
+  }
+}
+
+async function loadUserPoints() {
+  try {
+    const userId = localStorage.getItem('userId');
+    const res  = await fetch(`http://127.0.0.1:5000/api/user/${userId}`);
+    const data = await res.json();
+    if (data.success) {
+      const pts = data.points || 0;
+      document.getElementById('sidebarPts').textContent = pts;
+      
+      // Calculate Tier
+      let tierLabel = '🥉 Bronze'; 
+      let bg = 'rgba(176,141,87,0.12)'; 
+      let border = 'rgba(176,141,87,0.3)'; 
+      let color = '#c8a96e';
+      
+      if (pts >= 1000) { 
+        tierLabel = '💎 Platinum'; 
+        bg = 'rgba(0,217,126,0.12)'; border = 'rgba(0,217,126,0.3)'; color = 'var(--g)'; 
+      } else if (pts >= 500) { 
+        tierLabel = '🥇 Gold'; 
+        bg = 'rgba(255,193,7,0.12)'; border = 'rgba(255,193,7,0.3)'; color = '#ffc107'; 
+      } else if (pts >= 200) { 
+        tierLabel = '🥈 Silver'; 
+        bg = 'rgba(160,160,180,0.12)'; border = 'rgba(160,160,180,0.3)'; color = '#c0c0c8'; 
+      }
+      
+      const sb = document.getElementById('sidebarTierBadge');
+      if (sb) { 
+        sb.textContent = tierLabel; 
+        sb.style.background = bg; 
+        sb.style.borderColor = border; 
+        sb.style.color = color; 
+      }
+    }
+  } catch(e) {
+    console.warn('Could not fetch points:', e);
+  }
+}
+
+async function withdrawComplaint(complaintId, citizenId) {
+  try {
+    const response = await fetch(`${COMPLAINT_API_BASE}/${complaintId}`, {
+      method: 'DELETE',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ citizenId })
+    });
+    return await response.json();
+  } catch (err) {
+    console.error('[complaint-api] withdrawComplaint error:', err);
+    return { success: false, message: 'Failed to withdraw complaint.' };
+  }
+}
+
+// ── STATE ──
+
+let allComplaints    = [];
+let activeTab        = 'open';
+let activeComplaint  = null;
+
+// ── INIT ──
+window.addEventListener('load', async () => {
+  const name = localStorage.getItem('userName') || '—';
+  const initial = name.charAt(0).toUpperCase();
+  const id   = localStorage.getItem('userId')   || '—';
+  document.getElementById('sidebarName').textContent  = name;
+  document.getElementById('sidebarAvatar').textContent = initial;
+  document.getElementById('sidebarId').textContent    = id;
+  document.getElementById('topbarAvatar').textContent = initial;
+  
+  // Load profile picture from DB
+  await loadComplaintProfilePicture();
+  
+  await loadComplaints();
+
+  await loadUserPoints();
+});
+
+
+// ── CHAR COUNTER ──
+function updateCharCount(el) {
+  document.getElementById('charCount').textContent = el.value.length;
+}
+
+// ── WORKER ID VALIDATION ──
+const WORKER_CATEGORIES = ['Worker Misconduct', 'Missed Pickup', 'Improper Disposal', 'Damage to Property', 'Rude Behaviour'];
+let workerValidState = null;
+let _validationTimer = null;
+
+function isGeneralText(val) {
+  return ['general', 'management', 'system', 'service', 'n/a', 'na'].some(k => val.toLowerCase().includes(k));
+}
+
+function showWorkerMsg(type, msg) {
+  const el = document.getElementById('workerValidationMsg');
+  const inp = document.getElementById('cAgainst');
+  if (!el) return;
+  el.className = type === 'valid' ? 'worker-valid' : type === 'invalid' ? 'worker-invalid' : 'worker-checking';
+  el.textContent = msg;
+  el.style.display = 'block';
+  if (inp) inp.className = type === 'valid' ? 'input-valid' : type === 'invalid' ? 'input-error' : '';
+}
+
+function hideWorkerMsg() {
+  const el = document.getElementById('workerValidationMsg');
+  if (el) el.style.display = 'none';
+  const inp = document.getElementById('cAgainst');
+  if (inp) inp.className = '';
+  workerValidState = null;
+}
+
+function onAgainstInput() {
+  clearTimeout(_validationTimer);
+  const val = document.getElementById('cAgainst').value.trim();
+  const cat = document.getElementById('cCategory').value;
+  if (!val) { hideWorkerMsg(); return; }
+  if (isGeneralText(val)) { workerValidState = 'general'; showWorkerMsg('valid', '✓ General complaint — no Worker ID required.'); return; }
+  if (!WORKER_CATEGORIES.includes(cat)) { hideWorkerMsg(); workerValidState = 'general'; return; }
+  showWorkerMsg('checking', '⏳ Verifying Worker ID…');
+  _validationTimer = setTimeout(() => validateAgainstField(), 700);
+}
+
+async function validateAgainstField() {
+  const val = document.getElementById('cAgainst').value.trim();
+  const cat = document.getElementById('cCategory').value;
+  if (!val) { hideWorkerMsg(); return; }
+  if (isGeneralText(val)) { workerValidState = 'general'; showWorkerMsg('valid', '✓ General complaint — no Worker ID required.'); return; }
+  if (!WORKER_CATEGORIES.includes(cat)) { hideWorkerMsg(); workerValidState = 'general'; return; }
+  try {
+    const res = await fetch(`http://127.0.0.1:5000/api/workers/validate/${encodeURIComponent(val)}`);
+    const data = await res.json();
+    if (data.valid) {
+      workerValidState = true;
+      showWorkerMsg('valid', `✓ Worker found: ${data.worker.fullName} (${data.worker.department || 'Field Staff'})`);
+    } else {
+      workerValidState = false;
+      showWorkerMsg('invalid', `✗ Invalid Worker ID "${val}" — this ID does not exist in the system.`);
+    }
+  } catch(e) {
+    workerValidState = null;
+    showWorkerMsg('checking', '⚠ Could not verify — check your connection.');
+  }
+}
+
+// ── SUBMIT ──
+async function handleSubmit() {
+  const title       = document.getElementById('cTitle').value.trim();
+  const category    = document.getElementById('cCategory').value;
+  const against     = document.getElementById('cAgainst').value.trim();
+  const description = document.getElementById('cDescription').value.trim();
+  const citizenId   = localStorage.getItem('userId');
+
+  if (!citizenId)   { showToast('⚠️','Not Logged In','Please log in to submit a complaint.'); return; }
+  if (!title)       { showToast('⚠️','Missing','Please enter a complaint title.'); return; }
+  if (!category)    { showToast('⚠️','Missing','Please select a category.'); return; }
+  if (!against)     { showToast('⚠️','Missing','Please enter who the complaint is against.'); return; }
+
+  // Validate worker ID for worker-related categories
+  if (WORKER_CATEGORIES.includes(category) && !isGeneralText(against)) {
+    if (workerValidState === false) {
+      showToast('❌', 'Invalid Worker ID', `No worker with ID "${against}" exists. Please verify and try again.`);
+      document.getElementById('cAgainst').focus();
+      return;
+    }
+    if (workerValidState === null) {
+      // Not yet validated — do it now
+      await validateAgainstField();
+      if (workerValidState === false) {
+        showToast('❌', 'Invalid Worker ID', `No worker with ID "${against}" exists. Please verify and try again.`);
+        document.getElementById('cAgainst').focus();
+        return;
+      }
+    }
+  }
+  if (description.length < 20) { showToast('⚠️','Too Short','Description must be at least 20 characters.'); return; }
+
+  const btn = document.getElementById('submitComplaintBtn');
+  btn.disabled = true;
+  btn.innerHTML = '<span>⏳</span> Submitting…';
+
+  const payload = { citizenId, title, category, against, description };
+  console.log('📤 Submitting complaint payload:', payload);
+  const result = await submitComplaint(payload);
+
+  btn.disabled = false;
+  btn.innerHTML = '<span>🚨</span> Submit Complaint';
+
+  if (result.success) {
+    document.getElementById('successRef').textContent = result.referenceNo || result.complaintId;
+    document.getElementById('successOverlay').classList.add('open');
+    resetForm();
+    await loadComplaints();
+  } else {
+    showToast('❌', 'Failed', result.message || 'Could not submit complaint.');
+  }
+}
+
+function resetForm() {
+  document.getElementById('cTitle').value       = '';
+  document.getElementById('cCategory').value    = '';
+  document.getElementById('cAgainst').value     = '';
+  document.getElementById('cDescription').value = '';
+  document.getElementById('charCount').textContent = '0';
+
+}
+
+function closeSuccessModal() {
+  document.getElementById('successOverlay').classList.remove('open');
+}
+
+// ── LOAD COMPLAINTS ──
+async function loadComplaints() {
+  const citizenId = localStorage.getItem('userId');
+  if (!citizenId) {
+    console.warn('⚠️ No userId in localStorage — cannot load complaints');
+    return;
+  }
+  const result    = await fetchMyComplaints(citizenId);
+  allComplaints   = result.complaints || [];
+  updateStats();
+  renderList();
+}
+
+function updateStats() {
+  const open     = allComplaints.filter(c => c.status === 'open').length;
+  const review   = allComplaints.filter(c => c.status === 'in-progress' || c.status === 'under_review').length;
+  const resolved = allComplaints.filter(c => c.status === 'resolved' || c.status === 'closed').length;
+  document.getElementById('statOpen').textContent     = open;
+  document.getElementById('statReview').textContent   = review;
+  document.getElementById('statResolved').textContent = resolved;
+  document.getElementById('statTotal').textContent    = allComplaints.length;
+  document.getElementById('heroOpenCount').textContent = open + review;
+}
+
+// ── TABS ──
+function switchTab(tab) {
+  activeTab = tab;
+  const tabOpen     = document.getElementById('tabOpen');
+  const tabResolved = document.getElementById('tabResolved');
+  if (tab === 'open') {
+    tabOpen.className     = 'tab-btn active red';
+    tabResolved.className = 'tab-btn';
+    tabResolved.style.color = 'var(--muted)';
+  } else {
+    tabResolved.className = 'tab-btn active green';
+    tabOpen.className     = 'tab-btn';
+    tabOpen.style.color   = 'var(--muted)';
+  }
+  renderList();
+}
+
+// ── RENDER LIST ──
+const STATUS_ICON = { open:'🚨', 'in-progress':'⚙️', under_review:'🔍', resolved:'✅', closed:'🔒' };
+const STATUS_PILL_CLS = { open:'pill-open', 'in-progress':'pill-review', under_review:'pill-review', resolved:'pill-resolved', closed:'pill-closed' };
+const STATUS_LABEL    = { open:'OPEN', 'in-progress':'IN PROGRESS', under_review:'UNDER REVIEW', resolved:'RESOLVED', closed:'CLOSED' };
+const ICON_CLS        = { open:'open', 'in-progress':'under_review', under_review:'under_review', resolved:'resolved', closed:'closed' };
+
+function renderList() {
+  const wrap = document.getElementById('complaintListWrap');
+  const filtered = activeTab === 'open'
+    ? allComplaints.filter(c => c.status === 'open' || c.status === 'in-progress' || c.status === 'under_review')
+    : allComplaints.filter(c => c.status === 'resolved' || c.status === 'closed');
+
+  document.getElementById('listCount').textContent = filtered.length + ' complaint' + (filtered.length !== 1 ? 's' : '');
+
+  if (filtered.length === 0) {
+    wrap.innerHTML = `<div class="empty-state">
+      <div class="empty-ico">${activeTab === 'open' ? '🎉' : '📂'}</div>
+      <div class="empty-title">${activeTab === 'open' ? 'No open complaints' : 'No resolved complaints'}</div>
+      <div class="empty-sub">${activeTab === 'open' ? 'Great! You have no pending complaints.' : 'Resolved complaints will appear here.'}</div>
+    </div>`;
+    return;
+  }
+
+  wrap.innerHTML = filtered.map(c => {
+    const date = new Date(c.timestamp).toLocaleDateString('en-IN', { day:'numeric', month:'short', year:'numeric' });
+    return `
+      <div class="complaint-item" onclick="openDetailModal('${c._id}')">
+        <div class="ci-icon ${ICON_CLS[c.status] || 'open'}">${STATUS_ICON[c.status] || '🚨'}</div>
+        <div class="ci-body">
+          <div class="ci-header">
+            <div class="ci-title">${escapeHtml(c.title)}</div>
+            <div class="ci-ref">${c.referenceNo || ''}</div>
+          </div>
+          <div class="ci-meta">Against: ${escapeHtml(c.against)} &nbsp;·&nbsp; ${date}</div>
+          <div class="ci-desc">${escapeHtml(c.description)}</div>
+          <div class="ci-footer">
+            <span class="status-pill ${STATUS_PILL_CLS[c.status] || 'pill-open'}">${STATUS_LABEL[c.status] || 'OPEN'}</span>
+            <span class="cat-pill">${escapeHtml(c.category)}</span>
+          </div>
+        </div>
+      </div>`;
+  }).join('');
+}
+
+// ── DETAIL MODAL ──
+function openDetailModal(id) {
+  activeComplaint = allComplaints.find(c => c._id === id);
+  if (!activeComplaint) return;
+  const c = activeComplaint;
+  const date = new Date(c.timestamp).toLocaleString('en-IN', { day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
+
+  document.getElementById('dRef').textContent   = c.referenceNo || c._id;
+  document.getElementById('dTitle').textContent = c.title;
+  document.getElementById('dAgainst').textContent = c.against;
+  document.getElementById('dDesc').textContent  = c.description;
+  document.getElementById('dDate').textContent  = date;
+
+  const chips = document.getElementById('dChips');
+  chips.innerHTML = `
+    <span class="status-pill ${STATUS_PILL_CLS[c.status] || 'pill-open'}">${STATUS_LABEL[c.status] || 'OPEN'}</span>
+    <span class="cat-pill">${escapeHtml(c.category)}</span>`;
+
+  const noteWrap = document.getElementById('dAdminNoteWrap');
+  if (c.adminNote) {
+    noteWrap.style.display = 'block';
+    document.getElementById('dAdminNote').textContent = c.adminNote;
+  } else {
+    noteWrap.style.display = 'none';
+  }
+
+  const withdrawBtn = document.getElementById('withdrawBtn');
+  if (c.status === 'open') {
+    withdrawBtn.style.display = 'block';
+    withdrawBtn.disabled = false;
+    withdrawBtn.textContent = '🗑️ Withdraw Complaint';
+  } else {
+    withdrawBtn.style.display = 'none';
+  }
+
+  document.getElementById('detailOverlay').classList.add('open');
+}
+
+function closeDetailModal() {
+  document.getElementById('detailOverlay').classList.remove('open');
+  activeComplaint = null;
+}
+
+function overlayClick(e) {
+  if (e.target === document.getElementById('detailOverlay')) closeDetailModal();
+}
+
+document.addEventListener('keydown', e => { if (e.key === 'Escape') closeDetailModal(); });
+
+// ── WITHDRAW ──
+async function handleWithdraw() {
+  if (!activeComplaint) return;
+  const btn = document.getElementById('withdrawBtn');
+  btn.disabled = true;
+  btn.textContent = '⏳ Withdrawing…';
+
+  const result = await withdrawComplaint(activeComplaint._id, localStorage.getItem('userId'));
+  if (result.success) {
+    closeDetailModal();
+    showToast('✅', 'Withdrawn', 'Your complaint has been withdrawn.');
+    await loadComplaints();
+  } else {
+    btn.disabled = false;
+    btn.textContent = '🗑️ Withdraw Complaint';
+    showToast('❌', 'Failed', result.message || 'Could not withdraw complaint.');
+  }
+}
+
+// ── TOAST ──
+function showToast(ico, title, msg) {
+  const t = document.getElementById('toast');
+  document.getElementById('toastIco').textContent   = ico;
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastMsg').textContent   = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// ── HELPERS ──
+function escapeHtml(str) {
+  return String(str || '').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;').replace(/"/g,'&quot;');
+}
+
+async function loadComplaintProfilePicture() {
+  try {
+    const userId = localStorage.getItem('userId');
+    if (!userId) return;
+    
+    console.log('Loading complaint profile picture...');
+    const response = await fetch(`http://127.0.0.1:5000/api/user/profile-picture/${userId}`);
+    const data = await response.json();
+    if (data.success && data.profilePicture) {
+      console.log('✅ Profile picture loaded');
+      updateComplaintAvatars(data.profilePicture);
+    } else {
+      console.log('No profile picture in DB');
+    }
+  } catch (err) {
+    console.error('❌ Failed to load:', err);
+  }
+}
+
+function updateComplaintAvatars(dataUrl) {
+  const avatars = [
+    document.getElementById('sidebarAvatar'),
+    document.getElementById('topbarAvatar')
+  ];
+  
+  avatars.forEach(avatar => {
+    if (avatar) {
+      avatar.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;"/>`;
+    }
+  });
+}
+
+function logout() {
+  localStorage.clear();
+  window.location.href = 'welcome_page-dynamic.html';
+}
+</script>
+<script>
+/* ── Mobile sidebar init ── */
+(function mobileSidebar() {
+  function init() {
+    var hamburger = document.getElementById('hamburgerBtn');
+    var sidebar   = document.querySelector('.sidebar');
+    var overlay   = document.getElementById('sidebarOverlay');
+
+    if (!hamburger || !sidebar || !overlay) {
+      // Retry once after a short delay in case DOM isn't ready
+      setTimeout(init, 200);
+      return;
+    }
+
+    function open() {
+      sidebar.classList.add('drawer-open');
+      overlay.classList.add('visible');
+      hamburger.classList.add('is-open');
+      document.body.style.overflowY = 'hidden';
+    }
+    function close() {
+      sidebar.classList.remove('drawer-open');
+      overlay.classList.remove('visible');
+      hamburger.classList.remove('is-open');
+      document.body.style.overflowY = '';
+    }
+
+    hamburger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      sidebar.classList.contains('drawer-open') ? close() : open();
+    });
+
+    overlay.addEventListener('click', close);
+
+    // Auto-close when a nav link is tapped on mobile
+    sidebar.querySelectorAll('.nav-item, .back-btn').forEach(function(el) {
+      el.addEventListener('click', function() {
+        if (window.matchMedia('(max-width:768px)').matches) close();
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

@@ -1,0 +1,421 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>EcoVault — Complaints</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --g:#00d97e;--g2:#00b864;--g3:#007a42;--g4:#004d2a;
+  --dark:#060d0a;--d2:#0a1610;--d3:#0f2018;--d4:#162b1e;
+  --text:#e2f0ea;--muted:#5a8a72;--dim:#3a6050;
+  --warn:#f0b429;--info:#38bdf8;--danger:#ef4444;--gold:#ffd700;
+  --r:10px;--r2:16px;--r3:20px;--sidebar:220px;
+}
+*{font-family:'Outfit',sans-serif}
+body{background:var(--dark);color:var(--text);min-height:100vh;display:flex;overflow-x:hidden}
+
+.noise{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.018;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.scan{position:fixed;left:0;right:0;height:1px;z-index:0;background:linear-gradient(90deg,transparent,rgba(240,180,41,0.18),transparent);animation:scan 10s linear infinite;pointer-events:none}
+@keyframes scan{0%{top:-1%}100%{top:101%}}
+
+.sidebar{width:var(--sidebar);min-width:var(--sidebar);height:100vh;position:sticky;top:0;z-index:10;background:rgba(10,22,16,0.96);border-right:1px solid rgba(0,217,126,0.1);display:flex;flex-direction:column;backdrop-filter:blur(20px)}
+.sb-brand{padding:20px 18px 14px;border-bottom:1px solid rgba(0,217,126,0.08)}
+.sb-brand-row{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+.sb-ico{width:32px;height:32px;background:var(--g);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.sb-name{font-size:16px;font-weight:800}.sb-name span{color:var(--g)}
+.sb-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);border-radius:6px;padding:3px 9px;font-size:10px;font-weight:700;color:var(--gold);font-family:'JetBrains Mono',monospace;letter-spacing:1px}
+.sb-nav{flex:1;padding:12px}
+.sb-sec{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);font-family:'JetBrains Mono',monospace;padding:10px 8px 6px}
+.sb-item{display:flex;align-items:center;gap:9px;padding:9px 11px;border-radius:var(--r);color:var(--muted);font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;margin-bottom:2px;border:none;background:none;width:100%;text-align:left;text-decoration:none}
+.sb-item:hover{background:rgba(0,217,126,0.06);color:var(--text)}
+.sb-item.active{background:rgba(240,180,41,0.08);color:var(--warn);border:1px solid rgba(240,180,41,0.18)}
+.sb-icon{font-size:15px;width:20px;text-align:center}
+.sb-bottom{padding:12px;border-top:1px solid rgba(0,217,126,0.08)}
+.sb-back{display:flex;align-items:center;gap:8px;width:100%;padding:9px 11px;border-radius:var(--r);border:1px solid rgba(0,217,126,0.15);background:rgba(0,217,126,0.05);color:var(--g);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;text-decoration:none}
+.sb-back:hover{background:rgba(0,217,126,0.12)}
+
+.main{flex:1;display:flex;flex-direction:column;min-height:100vh;position:relative;z-index:1;overflow:hidden}
+.topbar{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(6,13,10,0.7);border-bottom:1px solid rgba(240,180,41,0.08);backdrop-filter:blur(10px);position:sticky;top:0;z-index:5;flex-shrink:0}
+.tb-title{font-size:17px;font-weight:700}
+.tb-sub{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.tb-right{display:flex;align-items:center;gap:10px}
+.live-pill{display:flex;align-items:center;gap:5px;background:rgba(240,180,41,0.08);border:1px solid rgba(240,180,41,0.2);border-radius:100px;padding:4px 11px;font-size:11px;color:var(--warn);font-family:'JetBrains Mono',monospace}
+.live-d{width:5px;height:5px;border-radius:50%;background:var(--warn);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.btn-ref{display:flex;align-items:center;gap:5px;padding:6px 13px;border-radius:8px;border:1px solid rgba(240,180,41,0.2);background:transparent;color:var(--warn);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.btn-ref:hover{background:rgba(240,180,41,0.08)}
+
+.content{flex:1;overflow-y:auto;padding:24px 28px}
+
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.scard{background:rgba(10,22,16,0.8);border:1px solid rgba(240,180,41,0.08);border-radius:var(--r2);padding:18px;position:relative;overflow:hidden;transition:all 0.2s}
+.scard:hover{border-color:rgba(240,180,41,0.2);transform:translateY(-2px)}
+.scard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(240,180,41,0.25),transparent)}
+.sc-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:9px}
+.sc-val{font-size:30px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1}
+.sc-val.g{color:var(--g)}.sc-val.w{color:var(--warn)}.sc-val.i{color:var(--info)}.sc-val.d{color:var(--danger)}
+.sc-sub{font-size:11px;color:var(--muted);margin-top:5px}
+.sc-icon{position:absolute;right:14px;top:14px;font-size:26px;opacity:0.12}
+
+.tcard{background:rgba(10,22,16,0.8);border:1px solid rgba(240,180,41,0.08);border-radius:var(--r2);overflow:hidden}
+.thead-row{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(240,180,41,0.07);flex-wrap:wrap;gap:10px}
+.thead-title{font-size:14px;font-weight:700}
+.thead-meta{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.s-input{padding:7px 12px;background:rgba(22,43,30,0.6);border:1px solid rgba(240,180,41,0.12);border-radius:8px;color:var(--text);font-size:12px;outline:none;width:200px;transition:all 0.2s}
+.s-input:focus{border-color:rgba(240,180,41,0.35)}
+.s-select{padding:7px 11px;background:rgba(22,43,30,0.6);border:1px solid rgba(240,180,41,0.12);border-radius:8px;color:var(--text);font-size:12px;outline:none;cursor:pointer}
+.s-select option{background:var(--d3)}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 16px;text-align:left;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);font-family:'JetBrains Mono',monospace;border-bottom:1px solid rgba(240,180,41,0.06);background:rgba(6,13,10,0.4)}
+td{padding:13px 16px;border-bottom:1px solid rgba(240,180,41,0.04);font-size:13px;vertical-align:middle}
+tr:hover td{background:rgba(240,180,41,0.02)}
+tr:last-child td{border-bottom:none}
+.mono{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+.clip{max-width:200px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;display:block}
+
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.b-open{background:rgba(56,189,248,0.1);color:var(--info);border:1px solid rgba(56,189,248,0.2)}
+.b-prog{background:rgba(240,180,41,0.1);color:var(--warn);border:1px solid rgba(240,180,41,0.2)}
+.b-res{background:rgba(0,217,126,0.1);color:var(--g);border:1px solid rgba(0,217,126,0.2)}
+.b-cls{background:rgba(90,138,114,0.1);color:var(--muted);border:1px solid rgba(90,138,114,0.2)}
+
+.act-row{display:flex;gap:5px;flex-wrap:wrap}
+.btn-a{padding:5px 10px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s;border:none}
+.btn-start{background:rgba(240,180,41,0.1);color:var(--warn);border:1px solid rgba(240,180,41,0.2)}
+.btn-start:hover{background:rgba(240,180,41,0.22)}
+.btn-res{background:rgba(0,217,126,0.1);color:var(--g);border:1px solid rgba(0,217,126,0.2)}
+.btn-res:hover{background:rgba(0,217,126,0.22)}
+.btn-cls{background:rgba(90,138,114,0.1);color:var(--muted);border:1px solid rgba(90,138,114,0.2)}
+.btn-cls:hover{background:rgba(90,138,114,0.2)}
+.btn-view{background:rgba(56,189,248,0.07);color:var(--info);border:1px solid rgba(56,189,248,0.15)}
+.btn-view:hover{background:rgba(56,189,248,0.18)}
+
+/* MODAL */
+.overlay{display:none;position:fixed;inset:0;z-index:200;background:rgba(0,0,0,0.65);backdrop-filter:blur(5px);align-items:center;justify-content:center}
+.overlay.open{display:flex}
+.modal{width:560px;max-height:82vh;overflow-y:auto;background:rgba(10,22,16,0.98);border:1px solid rgba(240,180,41,0.18);border-radius:var(--r3);padding:32px;position:relative;backdrop-filter:blur(30px)}
+.modal::before{content:'';position:absolute;top:0;left:0;right:0;height:2px;background:linear-gradient(90deg,transparent,var(--warn),transparent)}
+.modal-close{position:absolute;top:14px;right:14px;width:28px;height:28px;border-radius:50%;background:rgba(239,68,68,0.1);border:1px solid rgba(239,68,68,0.2);color:#f87171;cursor:pointer;font-size:14px;display:flex;align-items:center;justify-content:center;transition:all 0.2s}
+.modal-close:hover{background:rgba(239,68,68,0.25)}
+.modal-title{font-size:18px;font-weight:800;margin-bottom:20px;color:var(--text)}
+.d-row{display:flex;gap:18px;margin-bottom:14px}
+.d-field{flex:1}
+.d-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--dim);font-family:'JetBrains Mono',monospace;margin-bottom:4px}
+.d-val{font-size:14px;color:var(--text);font-weight:500}
+.d-box{background:rgba(22,43,30,0.6);border:1px solid rgba(240,180,41,0.1);border-radius:var(--r);padding:12px 14px;font-size:13px;color:var(--text);line-height:1.65;margin-top:4px}
+.m-actions{display:flex;gap:10px;margin-top:22px;flex-wrap:wrap}
+.btn-m{padding:9px 18px;border-radius:8px;font-size:13px;font-weight:700;cursor:pointer;border:none;transition:all 0.2s}
+.btn-m-g{background:var(--g);color:var(--dark)}.btn-m-g:hover{background:var(--g2)}
+.btn-m-w{background:rgba(240,180,41,0.12);color:var(--warn);border:1px solid rgba(240,180,41,0.25)}.btn-m-w:hover{background:rgba(240,180,41,0.22)}
+.btn-m-gh{background:transparent;color:var(--muted);border:1px solid rgba(0,217,126,0.12)}.btn-m-gh:hover{color:var(--text)}
+.btn-m-d{background:rgba(239,68,68,0.1);color:#f87171;border:1px solid rgba(239,68,68,0.22)}.btn-m-d:hover{background:rgba(239,68,68,0.2)}
+
+/* Admin note section */
+.note-section{margin-top:20px;border-top:1px solid rgba(240,180,41,0.1);padding-top:18px}
+.note-section .d-lbl{margin-bottom:8px;color:var(--warn)}
+.note-textarea{width:100%;padding:11px 14px;background:rgba(22,43,30,0.7);border:1px solid rgba(240,180,41,0.18);border-radius:var(--r);color:var(--text);font-family:'Outfit',sans-serif;font-size:13px;outline:none;resize:vertical;min-height:90px;transition:border-color 0.2s;line-height:1.6}
+.note-textarea:focus{border-color:rgba(240,180,41,0.45)}
+.note-textarea::placeholder{color:var(--dim)}
+.existing-note{background:rgba(0,217,126,0.06);border:1px solid rgba(0,217,126,0.18);border-radius:var(--r);padding:11px 14px;font-size:13px;color:var(--text);line-height:1.65;margin-bottom:10px}
+.note-label-row{display:flex;align-items:center;justify-content:space-between;margin-bottom:6px}
+.note-required-hint{font-size:10px;color:var(--danger);font-family:'JetBrains Mono',monospace}
+
+.empty{padding:50px;text-align:center;color:var(--muted);font-size:14px}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(240,180,41,0.15);border-top-color:var(--warn);border-radius:50%;animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+#toast{position:fixed;bottom:22px;right:22px;z-index:300;display:none;align-items:center;gap:8px;background:rgba(10,22,16,0.96);border:1px solid rgba(240,180,41,0.25);border-radius:var(--r2);padding:13px 18px;font-size:13px;font-weight:600;color:var(--warn);box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--dark)}::-webkit-scrollbar-thumb{background:var(--g4);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="noise"></div><div class="scan"></div>
+
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-brand-row"><div class="sb-ico">♻</div><div class="sb-name">Eco<span>Vault</span></div></div>
+    <div class="sb-badge">👑 ADMIN</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">Admin Panels</div>
+    <a class="sb-item" href="adminUsers.html"><span class="sb-icon">👥</span> User Management</a>
+    <a class="sb-item" href="adminWorkers.html"><span class="sb-icon">🚛</span> Worker Status</a>
+    <a class="sb-item active" href="adminComplaints.html"><span class="sb-icon">📋</span> Complaints</a>
+    <a class="sb-item" href="workerpayment.html"><span class="sb-icon">💸</span> Worker Payments</a>
+  </nav>
+  <div class="sb-bottom"><a class="sb-back" href="adminHome.html">← Admin Home</a></div>
+</aside>
+
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="tb-title">📋 Complaint Resolution</div>
+      <div class="tb-sub">Review and resolve all citizen complaints</div>
+    </div>
+    <div class="tb-right">
+      <div class="live-pill"><div class="live-d"></div>LIVE</div>
+      <button class="btn-ref" onclick="loadComplaints()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <div class="stats-row">
+      <div class="scard"><div class="sc-icon">📋</div><div class="sc-lbl">Total</div><div class="sc-val w" id="s-total">—</div><div class="sc-sub">All complaints</div></div>
+      <div class="scard"><div class="sc-icon">🔵</div><div class="sc-lbl">Open</div><div class="sc-val i" id="s-open">—</div><div class="sc-sub">Need action</div></div>
+      <div class="scard"><div class="sc-icon">⚙️</div><div class="sc-lbl">In Progress</div><div class="sc-val w" id="s-prog">—</div><div class="sc-sub">Being handled</div></div>
+      <div class="scard"><div class="sc-icon">✅</div><div class="sc-lbl">Resolved</div><div class="sc-val g" id="s-res">—</div><div class="sc-sub">Closed out</div></div>
+    </div>
+
+    <div class="tcard">
+      <div class="thead-row">
+        <div>
+          <div class="thead-title">All Citizen Complaints</div>
+          <div class="thead-meta" id="tableMeta">Loading…</div>
+        </div>
+        <div class="ctrls">
+          <input class="s-input" type="text" id="searchQ" placeholder="🔍 Title, ref, against…" oninput="filter()"/>
+          <select class="s-select" id="statusF" onchange="filter()">
+            <option value="">All Status</option>
+            <option value="open">🔵 Open</option>
+            <option value="in-progress">⚙️ In Progress</option>
+            <option value="resolved">✅ Resolved</option>
+            <option value="closed">🔒 Closed</option>
+          </select>
+          <select class="s-select" id="catF" onchange="filter()">
+            <option value="">All Categories</option>
+          </select>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Ref No.</th>
+            <th>Title</th>
+            <th>Category</th>
+            <th>Against</th>
+            <th>Status</th>
+            <th>Date</th>
+            <th>Actions</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="7" class="empty"><div class="spinner"></div> Loading complaints…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<!-- MODAL -->
+<div class="overlay" id="modal" onclick="if(event.target===this)closeModal()">
+  <div class="modal">
+    <button class="modal-close" onclick="closeModal()">✕</button>
+    <div class="modal-title">Complaint Details</div>
+    <div id="modalBody"></div>
+
+    <!-- Admin Note Section -->
+    <div class="note-section">
+      <div class="note-label-row">
+        <div class="d-lbl">Admin Message to Citizen</div>
+        <span class="note-required-hint" id="noteHint" style="display:none">* Required to close</span>
+      </div>
+      <div id="existingNoteWrap" style="display:none">
+        <div class="d-lbl" style="font-size:10px;color:var(--muted);margin-bottom:5px">Previous Response</div>
+        <div class="existing-note" id="existingNoteText"></div>
+      </div>
+      <textarea class="note-textarea" id="adminNoteInput" placeholder="Write a message to the citizen explaining the action taken or current status…"></textarea>
+    </div>
+
+    <div class="m-actions" id="modalActs"></div>
+  </div>
+</div>
+
+<div id="toast"></div>
+
+<script>
+// Auth Guard: Only admins can access this page
+(function() {
+  const role = localStorage.getItem('userRole');
+  if (role !== 'admin') {
+    window.location.href = 'welcome_page-dynamic.html';
+  }
+})();
+
+const API = 'http://127.0.0.1:5000';
+let all = [], filtered = [], currentId = null;
+
+async function loadComplaints() {
+  document.getElementById('tbody').innerHTML = '<tr><td colspan="7" class="empty"><div class="spinner"></div> Loading…</td></tr>';
+  try {
+    const r = await fetch(`${API}/api/admin/complaints`);
+    const d = await r.json();
+    all = d.complaints || [];
+    filtered = [...all];
+
+    // populate category filter
+    const cats = [...new Set(all.map(c=>c.category).filter(Boolean))];
+    const catSel = document.getElementById('catF');
+    catSel.innerHTML = '<option value="">All Categories</option>' + cats.map(c=>`<option value="${c}">${c}</option>`).join('');
+
+    updateStats(); render();
+  } catch(e) {
+    document.getElementById('tbody').innerHTML = '<tr><td colspan="7" class="empty">⚠️ Could not connect to server.</td></tr>';
+  }
+}
+
+function updateStats() {
+  document.getElementById('s-total').textContent = all.length;
+  document.getElementById('s-open').textContent  = all.filter(c=>c.status==='open').length;
+  document.getElementById('s-prog').textContent  = all.filter(c=>c.status==='in-progress').length;
+  document.getElementById('s-res').textContent   = all.filter(c=>c.status==='resolved').length;
+}
+
+function filter() {
+  const q = document.getElementById('searchQ').value.toLowerCase();
+  const st = document.getElementById('statusF').value;
+  const ct = document.getElementById('catF').value;
+  filtered = all.filter(c => {
+    const mq = !q || c.title?.toLowerCase().includes(q) || c.referenceNo?.toLowerCase().includes(q) || c.against?.toLowerCase().includes(q);
+    const ms = !st || c.status===st;
+    const mc = !ct || c.category===ct;
+    return mq && ms && mc;
+  });
+  render();
+}
+
+const statusBadge = s => ({
+  'open':        '<span class="badge b-open">🔵 Open</span>',
+  'in-progress': '<span class="badge b-prog">⚙️ In Progress</span>',
+  'resolved':    '<span class="badge b-res">✅ Resolved</span>',
+  'closed':      '<span class="badge b-cls">🔒 Closed</span>',
+}[s] || `<span class="badge">${s}</span>`);
+
+function render() {
+  const tbody = document.getElementById('tbody');
+  document.getElementById('tableMeta').textContent = `Showing ${filtered.length} of ${all.length} complaints`;
+  if (!filtered.length) { tbody.innerHTML='<tr><td colspan="7" class="empty">No complaints match the filter.</td></tr>'; return; }
+
+  tbody.innerHTML = filtered.map(c => {
+    const date = c.timestamp ? new Date(c.timestamp).toLocaleDateString('en-IN',{day:'2-digit',month:'short',year:'numeric'}) : '—';
+    let acts = `<button class="btn-a btn-view" onclick="openModal('${c._id}')">👁 View</button>`;
+    if (c.status==='open')        acts += ` <button class="btn-a btn-start" onclick="setStatus('${c._id}','in-progress')">⚙️ Start</button>`;
+    if (c.status==='in-progress') acts += ` <button class="btn-a btn-res" onclick="setStatus('${c._id}','resolved')">✅ Resolve</button>`;
+    if (c.status!=='resolved' && c.status!=='closed') acts += ` <button class="btn-a btn-cls" onclick="setStatus('${c._id}','closed')">🔒 Close</button>`;
+    return `<tr>
+      <td><span class="mono" style="color:var(--info)">${esc(c.referenceNo||'—')}</span></td>
+      <td><span class="clip" style="font-weight:600">${esc(c.title||'—')}</span></td>
+      <td><span class="mono">${esc(c.category||'—')}</span></td>
+      <td><span style="color:var(--warn);font-weight:500">${esc(c.against||'—')}</span></td>
+      <td>${statusBadge(c.status)}</td>
+      <td><span class="mono">${date}</span></td>
+      <td><div class="act-row">${acts}</div></td>
+    </tr>`;
+  }).join('');
+}
+
+function openModal(id) {
+  currentId = id;
+  const c = all.find(x=>x._id===id);
+  if (!c) return;
+  const date = c.timestamp ? new Date(c.timestamp).toLocaleString('en-IN') : '—';
+  document.getElementById('modalBody').innerHTML = `
+    <div class="d-row">
+      <div class="d-field"><div class="d-lbl">Reference No.</div><div class="d-val mono" style="color:var(--info)">${esc(c.referenceNo||'—')}</div></div>
+      <div class="d-field"><div class="d-lbl">Status</div>${statusBadge(c.status)}</div>
+    </div>
+    <div class="d-row">
+      <div class="d-field"><div class="d-lbl">Category</div><div class="d-val">${esc(c.category||'—')}</div></div>
+      <div class="d-field"><div class="d-lbl">Complaint Against</div><div class="d-val" style="color:var(--warn)">${esc(c.against||'—')}</div></div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div class="d-lbl">Title</div>
+      <div class="d-val" style="font-size:16px;font-weight:700;margin-top:4px">${esc(c.title||'—')}</div>
+    </div>
+    <div style="margin-bottom:14px">
+      <div class="d-lbl">Description</div>
+      <div class="d-box">${esc(c.description||'No description provided.')}</div>
+    </div>
+    <div class="d-row">
+      <div class="d-field"><div class="d-lbl">Submitted On</div><div class="d-val mono" style="font-size:11px">${date}</div></div>
+      <div class="d-field"><div class="d-lbl">Citizen ID</div><div class="d-val mono" style="font-size:11px;color:var(--muted)">${esc(c.citizenId?.toString()||'—')}</div></div>
+    </div>`;
+
+  // Populate existing note
+  const existingWrap = document.getElementById('existingNoteWrap');
+  if (c.adminNote) {
+    existingWrap.style.display = 'block';
+    document.getElementById('existingNoteText').textContent = c.adminNote;
+  } else {
+    existingWrap.style.display = 'none';
+  }
+  document.getElementById('adminNoteInput').value = c.adminNote || '';
+  document.getElementById('noteHint').style.display = 'none';
+
+  const acts = document.getElementById('modalActs');
+  acts.innerHTML = '';
+  if (c.status === 'open') {
+    acts.innerHTML += `<button class="btn-m btn-m-w" onclick="setStatus('${c._id}','in-progress',true)">⚙️ Mark In Progress</button>`;
+    acts.innerHTML += `<button class="btn-m btn-m-g" onclick="setStatus('${c._id}','resolved',true)">✅ Mark Resolved</button>`;
+  }
+  if (c.status === 'in-progress') {
+    acts.innerHTML += `<button class="btn-m btn-m-g" onclick="setStatus('${c._id}','resolved',true)">✅ Mark Resolved</button>`;
+  }
+  if (c.status !== 'closed') {
+    acts.innerHTML += `<button class="btn-m btn-m-d" onclick="closeWithNote('${c._id}')">🔒 Close Complaint</button>`;
+  }
+  acts.innerHTML += `<button class="btn-m btn-m-gh" onclick="closeModal()">Cancel</button>`;
+
+  document.getElementById('modal').classList.add('open');
+}
+
+function closeModal() { document.getElementById('modal').classList.remove('open'); }
+
+async function closeWithNote(id) {
+  const note = document.getElementById('adminNoteInput').value.trim();
+  if (!note) {
+    document.getElementById('noteHint').style.display = 'inline';
+    document.getElementById('adminNoteInput').focus();
+    document.getElementById('adminNoteInput').style.borderColor = 'rgba(239,68,68,0.55)';
+    toast('⚠️ Please write a message to the citizen before closing.', true);
+    return;
+  }
+  await setStatus(id, 'closed', true, note);
+}
+
+async function setStatus(id, status, fromModal=false, noteOverride=null) {
+  const note = noteOverride !== null ? noteOverride : (document.getElementById('adminNoteInput')?.value.trim() || '');
+  try {
+    const body = { status };
+    if (note) body.adminNote = note;
+    const r = await fetch(`${API}/api/admin/complaints/${id}/status`, {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify(body)
+    });
+    const d = await r.json();
+    if (d.success) {
+      const c = all.find(x=>x._id===id);
+      if (c) { c.status = status; if (note) c.adminNote = note; }
+      updateStats(); filter();
+      if (fromModal) closeModal();
+      const msgs = {'in-progress':'⚙️ Marked in progress','resolved':'✅ Complaint resolved','closed':'🔒 Complaint closed'};
+      toast(msgs[status]||'Updated');
+    } else toast('⚠️ '+(d.message||'Failed'), true);
+  } catch { toast('⚠️ Server error', true); }
+}
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+function toast(msg,err=false){
+  const t=document.getElementById('toast');
+  t.style.display='flex'; t.textContent=msg;
+  t.style.color=err?'#f87171':'var(--warn)';
+  t.style.borderColor=err?'rgba(239,68,68,0.3)':'rgba(240,180,41,0.25)';
+  clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none',3000);
+}
+
+loadComplaints();
+</script>
+</body>
+</html>

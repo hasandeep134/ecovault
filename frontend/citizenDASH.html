@@ -1,0 +1,1802 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>EcoVault — Citizen Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --g:#00d97e;--g2:#00b864;--g3:#007a42;--g4:#004d2a;
+  --dark:#060d0a;--d2:#0a1610;--d3:#0f2018;--d4:#162b1e;--d5:#1a3327;
+  --surface:#1a3327;--surf2:#1f3d30;
+  --text:#e2f0ea;--muted:#5a8a72;--dim:#3a6050;
+  --accent:#00ffaa;--acc2:#00e090;
+  --warn:#f0b429;--info:#38bdf8;--danger:#ef4444;
+  --r:10px;--r2:16px;--r3:20px;
+  --sidebar:240px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Outfit',sans-serif;background:var(--dark);color:var(--text);overflow-x:hidden;min-height:100vh;display:flex}
+
+/* ── MAP BG ── */
+.map-bg{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.map-bg svg{width:100%;height:100%;opacity:0.07}
+.scan-line{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,217,126,0.3),transparent);animation:scan 10s linear infinite}
+@keyframes scan{0%{top:-1%}100%{top:101%}}
+.noise{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.02;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+
+/* ── SIDEBAR ── */
+.sidebar{
+  width:var(--sidebar);min-width:var(--sidebar);
+  height:100vh;position:sticky;top:0;
+  background:rgba(10,22,16,0.95);
+  border-right:1px solid rgba(0,217,126,0.1);
+  display:flex;flex-direction:column;
+  padding:0;z-index:10;
+  backdrop-filter:blur(20px);
+}
+.sidebar-brand{
+  padding:20px 20px 0;
+  border-bottom:1px solid rgba(0,217,126,0.08);
+  margin-bottom:8px;
+}
+.brand-row{display:flex;align-items:center;gap:9px;margin-bottom:20px}
+.brand-ico{width:32px;height:32px;background:var(--g);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.brand-name{font-size:17px;font-weight:800;color:var(--text)}
+.brand-name span{color:var(--g)}
+
+.user-card{
+  margin:0 12px 8px;
+  padding:14px;
+  background:var(--d4);
+  border-radius:var(--r2);
+  border:1px solid rgba(0,217,126,0.1);
+}
+.user-avatar{
+  width:40px;height:40px;border-radius:50%;
+  background:linear-gradient(135deg,var(--g3),var(--g2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;font-weight:700;color:#fff;
+  margin-bottom:10px;border:2px solid rgba(0,217,126,0.3);
+}
+.user-name{font-size:14px;font-weight:700;color:var(--text)}
+.user-id{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.user-pts{
+  display:flex;align-items:center;gap:6px;
+  margin-top:10px;padding-top:10px;
+  border-top:1px solid rgba(255,255,255,0.05);
+}
+.pts-badge{
+  display:flex;align-items:center;gap:4px;
+  background:rgba(0,217,126,0.1);border:1px solid rgba(0,217,126,0.2);
+  border-radius:6px;padding:4px 8px;
+  font-size:12px;font-weight:700;color:var(--g);
+  font-family:'JetBrains Mono',monospace;
+}
+.pts-label{font-size:11px;color:var(--muted)}
+.tier-inline-badge {
+  display: inline-flex;
+  align-items: center;
+  gap: 3px;
+  border-radius: 6px;
+  padding: 3px 8px;
+  font-size: 11px;
+  font-weight: 700;
+  font-family: 'JetBrains Mono', monospace;
+  border: 1px solid transparent;
+  white-space: nowrap; /* Forces the icon and text to stay on one line */
+}
+
+.nav-section{padding:4px 12px;margin-top:4px;flex:1;overflow-y:auto}
+.nav-sec-label{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);font-family:'JetBrains Mono',monospace;padding:8px 8px 6px}
+.nav-item{
+  display:flex;align-items:center;gap:10px;
+  padding:10px 12px;border-radius:var(--r);
+  color:var(--muted);font-size:13px;font-weight:500;
+  cursor:pointer;transition:all 0.2s;margin-bottom:2px;
+  border:none;background:none;width:100%;text-align:left;
+}
+.nav-item:hover{background:rgba(0,217,126,0.06);color:var(--text)}
+.nav-item.active{background:rgba(0,217,126,0.1);color:var(--g);border:1px solid rgba(0,217,126,0.15)}
+.nav-icon{font-size:15px;width:20px;text-align:center}
+.nav-badge{margin-left:auto;background:var(--danger);color:#fff;font-size:10px;font-weight:700;padding:2px 6px;border-radius:10px}
+.nav-badge.green{background:var(--g3);color:var(--g)}
+
+.sidebar-bottom{
+  padding:12px;
+  border-top:1px solid rgba(0,217,126,0.08);
+}
+.logout-btn{
+  display:flex;align-items:center;gap:10px;
+  width:100%;padding:10px 12px;border-radius:var(--r);
+  background:rgba(239,68,68,0.06);border:1px solid rgba(239,68,68,0.1);
+  color:rgba(239,68,68,0.7);font-family:'Outfit',sans-serif;
+  font-size:13px;font-weight:500;cursor:pointer;transition:all 0.2s;
+}
+.logout-btn:hover{background:rgba(239,68,68,0.12);color:var(--danger)}
+
+/* ── MAIN ── */
+.main{flex:1;display:flex;flex-direction:column;min-height:100vh;position:relative;z-index:2;overflow:auto}
+
+/* TOP BAR */
+.topbar{
+  height:60px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;
+  background:rgba(6,13,10,0.85);
+  border-bottom:1px solid rgba(0,217,126,0.1);
+  backdrop-filter:blur(16px);
+  position:sticky;top:0;z-index:9;flex-shrink:0;
+}
+.topbar-left{display:flex;align-items:center;gap:16px}
+.page-title{font-size:16px;font-weight:700;color:var(--text)}
+.breadcrumb{font-size:12px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.topbar-right{display:flex;align-items:center;gap:12px}
+.status-pill{display:flex;align-items:center;gap:6px;padding:5px 12px;border-radius:100px;background:rgba(0,217,126,0.08);border:1px solid rgba(0,217,126,0.2);font-size:11px;color:var(--g);font-family:'JetBrains Mono',monospace}
+.live-dot{width:5px;height:5px;border-radius:50%;background:var(--g);animation:blink 1.5s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.notif-btn{
+  width:36px;height:36px;border-radius:9px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  display:flex;align-items:center;justify-content:center;
+  font-size:16px;cursor:pointer;transition:all 0.2s;
+  position:relative;
+}
+.notif-btn:hover{border-color:rgba(0,217,126,0.3)}
+.notif-dot{position:absolute;top:6px;right:6px;width:7px;height:7px;border-radius:50%;background:var(--danger);border:1.5px solid var(--dark)}
+
+/* CONTENT */
+.content{padding:32px 40px;display:flex;flex-direction:column;gap:22px;flex:1;overflow-y:auto}
+
+/* STAT CARDS ROW */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px}
+.stat-card{
+  background:var(--d3);border-radius:var(--r2);
+  padding:18px 20px;border:1px solid rgba(255,255,255,0.05);
+  position:relative;overflow:hidden;transition:all 0.25s;cursor:default;
+}
+.stat-card:hover{border-color:rgba(0,217,126,0.2);transform:translateY(-2px)}
+.stat-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0}
+.stat-card.green::after{background:linear-gradient(90deg,var(--g3),var(--g))}
+.stat-card.amber::after{background:linear-gradient(90deg,#92400e,var(--warn))}
+.stat-card.blue::after{background:linear-gradient(90deg,#0c4a6e,var(--info))}
+.stat-card.red::after{background:linear-gradient(90deg,#7f1d1d,var(--danger))}
+.stat-card{min-height:110px;display:flex;flex-direction:column;justify-content:flex-start}
+.stat-eyebrow{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;letter-spacing:1px;text-transform:uppercase;margin-bottom:10px}
+.stat-val{font-size:32px;font-weight:900;letter-spacing:-1px;line-height:1}
+.stat-val.green{color:var(--g)}
+.stat-val.amber{color:var(--warn)}
+.stat-val.blue{color:var(--info)}
+.stat-val.red{color:var(--danger)}
+.stat-icon{position:absolute;bottom:14px;right:16px;font-size:28px;opacity:0.15}
+/* PROFILE POPOVER */
+.profile-popover{
+  position:fixed;top:60px;right:28px;width:280px;
+  background:var(--d2);border:1px solid rgba(0,217,126,0.15);
+  border-radius:var(--r2);z-index:99;display:none;
+  box-shadow:0 12px 48px rgba(0,0,0,0.6);
+  backdrop-filter:blur(20px);animation:popoverSlideDown 0.25s ease;
+}
+.profile-popover.show{display:block}
+@keyframes popoverSlideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.profile-popover-content{padding:20px;display:flex;flex-direction:column;align-items:center}
+.profile-header{margin-bottom:16px}
+.profile-avatar-wrapper{
+  position:relative;width:80px;height:80px;margin:0 auto;
+}
+.profile-avatar-large{
+  width:80px;height:80px;border-radius:50%;
+  background:linear-gradient(135deg,var(--g3),var(--g2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;font-weight:900;color:#fff;
+  border:3px solid rgba(0,217,126,0.3);
+  cursor:pointer;transition:all 0.2s;
+}
+.profile-avatar-large:hover{border-color:rgba(0,217,126,0.6);transform:scale(1.05)}
+.profile-camera-overlay{
+  position:absolute;bottom:2px;right:2px;width:28px;height:28px;
+  border-radius:50%;background:var(--g);color:var(--dark);
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+  font-weight:700;cursor:pointer;border:2px solid var(--d2);
+  transition:all 0.2s;box-shadow:0 4px 12px rgba(0,217,126,0.4);
+}
+.profile-camera-overlay:hover{transform:scale(1.15);box-shadow:0 6px 16px rgba(0,217,126,0.5)}
+.profile-name{
+  font-size:16px;font-weight:700;color:var(--text);text-align:center;margin-top:8px;
+}
+.profile-rank{
+  font-size:11px;color:var(--g);font-family:'JetBrains Mono',monospace;
+  background:rgba(0,217,126,0.08);border:1px solid rgba(0,217,126,0.2);
+  padding:4px 12px;border-radius:100px;margin-top:8px;
+}
+
+/* MAIN GRID */
+.main-grid{display:grid;grid-template-columns:1.2fr 400px;gap:20px}
+
+/* MAP SECTION */
+.map-section{display:flex;flex-direction:column;gap:0}
+.panel{background:var(--d3);border-radius:var(--r2);border:1px solid rgba(255,255,255,0.05);overflow:hidden}
+.panel-header{
+  padding:14px 18px;border-bottom:1px solid rgba(0,217,126,0.08);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.panel-title{font-size:14px;font-weight:700;color:var(--text);display:flex;align-items:center;gap:8px}
+.panel-tag{font-size:10px;font-family:'JetBrains Mono',monospace;color:var(--muted);background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.07);padding:2px 8px;border-radius:4px}
+.map-panel-wrap{background:var(--d3);border-radius:var(--r2);border:1px solid rgba(255,255,255,0.05)}
+.map-area{
+  height:340px;background:#060f0a;position:relative;
+  cursor:crosshair;
+}
+/* Leaflet overrides to match dark theme */
+#leafletMap{width:100%;height:340px;display:block;z-index:1;border-radius:0}
+.leaflet-container{background:#060f0a!important;font-family:'Outfit',sans-serif}
+.leaflet-tile-pane{filter:brightness(0.85) saturate(0.9) hue-rotate(10deg)}
+.leaflet-control-zoom{border:1px solid rgba(0,217,126,0.25)!important;border-radius:8px!important;overflow:hidden}
+.leaflet-control-zoom a{
+  background:rgba(10,22,16,0.92)!important;color:var(--g)!important;
+  border-color:rgba(0,217,126,0.15)!important;
+  font-size:16px!important;width:30px!important;height:30px!important;
+  line-height:30px!important;transition:background 0.2s;
+}
+.leaflet-control-zoom a:hover{background:rgba(0,217,126,0.15)!important}
+.leaflet-control-attribution{
+  background:rgba(6,13,10,0.75)!important;color:var(--muted)!important;
+  font-size:9px!important;backdrop-filter:blur(4px);
+  border-top-left-radius:6px!important;
+}
+.leaflet-control-attribution a{color:var(--g)!important}
+.eco-marker-icon{
+  width:28px;height:28px;border-radius:50% 50% 50% 0;
+  transform:rotate(-45deg);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 14px rgba(0,0,0,0.5);
+  border:2px solid rgba(255,255,255,0.2);
+}
+.eco-popup .leaflet-popup-content-wrapper{
+  background:rgba(10,22,16,0.95)!important;
+  border:1px solid rgba(0,217,126,0.2)!important;
+  border-radius:10px!important;color:var(--text)!important;
+  backdrop-filter:blur(12px);box-shadow:0 8px 32px rgba(0,0,0,0.5)!important;
+}
+.eco-popup .leaflet-popup-tip{background:rgba(10,22,16,0.95)!important}
+.eco-popup .leaflet-popup-content{margin:10px 14px!important;font-size:12px;font-family:'Outfit',sans-serif}
+.map-pin{
+  position:absolute;transform:translate(-50%,-100%);
+  display:flex;flex-direction:column;align-items:center;
+  cursor:grab;animation:pinDrop 0.4s cubic-bezier(0.34,1.56,0.64,1) both;
+  pointer-events:none;
+}
+@keyframes pinDrop{from{transform:translate(-50%,-150%) scale(0.5);opacity:0}to{transform:translate(-50%,-100%) scale(1);opacity:1}}
+.pin-body{
+  width:28px;height:28px;border-radius:50% 50% 50% 0;
+  transform:rotate(-45deg);display:flex;align-items:center;justify-content:center;
+  box-shadow:0 4px 14px rgba(0,0,0,0.4);
+}
+.pin-body span{transform:rotate(45deg);font-size:13px}
+.pin-stem{width:2px;height:8px;background:rgba(255,255,255,0.3)}
+.pin-active .pin-body{background:var(--g)}
+.pin-pending .pin-body{background:var(--warn)}
+.pin-done .pin-body{background:var(--info)}
+
+.map-controls{
+  position:absolute;bottom:12px;right:12px;
+  display:flex;flex-direction:column;gap:6px;
+}
+.map-ctrl-btn{
+  width:32px;height:32px;border-radius:8px;
+  background:rgba(10,22,16,0.9);border:1px solid rgba(0,217,126,0.2);
+  color:var(--g);font-size:16px;cursor:pointer;
+  display:flex;align-items:center;justify-content:center;
+  transition:all 0.2s;backdrop-filter:blur(8px);
+}
+.map-ctrl-btn:hover{background:rgba(0,217,126,0.1)}
+.map-tip{
+  position:absolute;top:12px;left:50%;transform:translateX(-50%);
+  background:rgba(10,22,16,0.9);border:1px solid rgba(0,217,126,0.2);
+  border-radius:8px;padding:7px 14px;
+  font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;
+  backdrop-filter:blur(8px);white-space:nowrap;
+  animation:fadeUp 0.5s ease both;
+}
+.map-legend{
+  display:flex;gap:12px;padding:10px 16px;
+  border-top:1px solid rgba(0,217,126,0.07);
+  flex-wrap:wrap;
+}
+.leg-item{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+.leg-dot{width:8px;height:8px;border-radius:50%}
+
+/* REQUEST FORM */
+.req-form{padding:16px}
+.form-row{margin-bottom:12px}
+.form-row label{font-size:11px;color:var(--muted);font-weight:500;display:block;margin-bottom:5px;font-family:'JetBrains Mono',monospace;letter-spacing:0.5px;text-transform:uppercase}
+.form-row input,.form-row select,.form-row textarea{
+  width:100%;padding:10px 12px;
+  background:rgba(255,255,255,0.04);
+  border:1px solid rgba(255,255,255,0.08);
+  border-radius:8px;color:var(--text);
+  font-family:'Outfit',sans-serif;font-size:13px;
+  outline:none;transition:border-color 0.2s;
+  resize:none;
+}
+.form-row input:focus,.form-row select:focus,.form-row textarea:focus{border-color:rgba(0,217,126,0.4)}
+.form-row input::placeholder,.form-row textarea::placeholder{color:var(--dim)}
+.form-row select option{background:var(--d3)}
+.coords-box{
+  display:flex;align-items:center;gap:8px;
+  padding:8px 12px;background:rgba(0,217,126,0.06);
+  border:1px solid rgba(0,217,126,0.15);
+  border-radius:8px;font-family:'JetBrains Mono',monospace;
+  font-size:11px;color:var(--g);
+}
+.submit-req{
+  width:100%;padding:12px;border-radius:9px;
+  background:var(--g);color:var(--dark);
+  border:none;font-family:'Outfit',sans-serif;
+  font-size:14px;font-weight:700;cursor:pointer;
+  transition:all 0.2s;display:flex;align-items:center;justify-content:center;gap:6px;
+}
+.submit-req:hover{background:var(--acc2);transform:translateY(-1px)}
+.submit-req:disabled{opacity:0.4;cursor:not-allowed;transform:none}
+
+/* RIGHT COLUMN */
+.right-col{display:flex;flex-direction:column;gap:20px}
+
+/* GREEN POINTS */
+/*.points-panel{} */
+.points-header-inner{flex-direction:column;align-items:flex-start;gap:4px}
+.pts-big{
+  font-size:48px;font-weight:900;color:var(--g);
+  letter-spacing:-2px;line-height:1;
+  font-family:'Outfit',sans-serif;
+}
+.pts-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.pts-progress-wrap{padding:0 18px 14px}
+.pts-bar-label{display:flex;justify-content:space-between;font-size:11px;color:var(--muted);margin-bottom:6px;font-family:'JetBrains Mono',monospace}
+.pts-bar-track{height:6px;background:rgba(255,255,255,0.06);border-radius:10px;overflow:hidden}
+.pts-bar-fill{height:100%;border-radius:10px;background:linear-gradient(90deg,var(--g3),var(--g),var(--acc2));transition:width 1s cubic-bezier(0.34,1.56,0.64,1)}
+.pts-tier{display:flex;gap:8px;padding:0 18px 14px}
+.tier-chip{
+  flex:1;padding:8px;border-radius:8px;text-align:center;
+  border:1px solid rgba(255,255,255,0.06);
+  font-size:11px;font-weight:600;
+  transition:all 0.2s;
+}
+.tier-chip.active{background:rgba(0,217,126,0.1);border-color:rgba(0,217,126,0.3);color:var(--g)}
+.tier-chip:not(.active){color:var(--dim)}
+.tier-chip .tier-ico{font-size:16px;display:block;margin-bottom:3px}
+.hist-row{display:flex;align-items:center;justify-content:space-between;padding:8px 0;border-bottom:1px solid rgba(255,255,255,0.04)}
+.hist-row:last-child{border-bottom:none}
+.hist-left{display:flex;align-items:center;gap:8px}
+.hist-ico{width:28px;height:28px;border-radius:7px;background:rgba(0,217,126,0.1);display:flex;align-items:center;justify-content:center;font-size:13px}
+.hist-desc{font-size:12px;color:var(--text);font-weight:500}
+.hist-date{font-size:10px;color:var(--muted);margin-top:1px;font-family:'JetBrains Mono',monospace}
+.hist-pts{font-size:13px;font-weight:700;color:var(--g)}
+
+/* STATUS TRACKER */
+.tracker-steps{padding:14px 18px;display:flex;flex-direction:column;gap:0}
+.step{display:flex;gap:14px;position:relative}
+.step-left{display:flex;flex-direction:column;align-items:center}
+.step-circle{
+  width:32px;height:32px;border-radius:50%;
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;flex-shrink:0;transition:all 0.4s;
+  position:relative;z-index:1;
+}
+.step.done .step-circle{background:var(--g);color:var(--dark);box-shadow:0 0 16px rgba(0,217,126,0.4)}
+.step.active .step-circle{background:var(--d4);border:2px solid var(--g);color:var(--g);animation:stepPulse 2s infinite}
+.step.pending .step-circle{background:rgba(255,255,255,0.04);border:2px solid rgba(255,255,255,0.1);color:var(--dim)}
+@keyframes stepPulse{0%,100%{box-shadow:0 0 0 0 rgba(0,217,126,0.4)}50%{box-shadow:0 0 0 8px rgba(0,217,126,0)}}
+.step-line{width:2px;flex:1;min-height:24px;margin:4px 0;border-radius:2px;transition:all 0.4s}
+.step.done .step-line{background:var(--g)}
+.step.active .step-line,.step.pending .step-line{background:rgba(255,255,255,0.07)}
+.step-right{padding-bottom:18px;padding-top:4px;flex:1}
+.step-title{font-size:13px;font-weight:600;color:var(--text);margin-bottom:2px}
+.step.pending .step-title{color:var(--dim)}
+.step-desc{font-size:11px;color:var(--muted);line-height:1.5}
+.step.pending .step-desc{color:var(--dim)}
+.step-time{font-size:10px;color:var(--dim);font-family:'JetBrains Mono',monospace;margin-top:3px}
+.step-badge{
+  display:inline-flex;align-items:center;gap:4px;
+  padding:3px 8px;border-radius:4px;font-size:10px;font-weight:600;
+  font-family:'JetBrains Mono',monospace;margin-top:4px;
+}
+.badge-done{background:rgba(0,217,126,0.1);color:var(--g);border:1px solid rgba(0,217,126,0.2)}
+.badge-active{background:rgba(240,180,41,0.1);color:var(--warn);border:1px solid rgba(240,180,41,0.2)}
+.badge-pending{background:rgba(255,255,255,0.04);color:var(--dim);border:1px solid rgba(255,255,255,0.07)}
+
+/* TRACKER WORKER CHIP */
+.tracker-worker{
+  display:flex;align-items:center;gap:10px;
+  margin:0 18px 14px;padding:10px 12px;
+  background:rgba(56,189,248,0.06);border:1px solid rgba(56,189,248,0.15);
+  border-radius:10px;
+}
+.tw-avatar{
+  width:30px;height:30px;border-radius:50%;
+  background:linear-gradient(135deg,var(--g3),var(--info));
+  display:flex;align-items:center;justify-content:center;
+  font-size:12px;font-weight:700;color:#fff;flex-shrink:0;
+}
+.tw-name{font-size:12px;font-weight:600;color:var(--text)}
+.tw-meta{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:1px}
+
+/* TRACKER EMPTY / LOADING */
+.tracker-empty{
+  padding:28px 18px;text-align:center;
+  display:flex;flex-direction:column;align-items:center;gap:8px;
+}
+.tracker-empty-ico{font-size:32px;opacity:0.4}
+.tracker-empty-title{font-size:13px;font-weight:600;color:var(--muted)}
+.tracker-empty-sub{font-size:11px;color:var(--dim);line-height:1.5}
+
+/* TRACKER REFRESH INDICATOR */
+.tracker-live{
+  display:flex;align-items:center;gap:5px;
+  font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;
+}
+.tracker-live-dot{
+  width:5px;height:5px;border-radius:50%;background:var(--g);
+  animation:blink 2s infinite;flex-shrink:0;
+}
+
+/* COMPLETED BADGE on req items */
+.pill-completed{background:rgba(0,217,126,0.1);color:var(--g);border:1px solid rgba(0,217,126,0.2)}
+.req-item.trackable:hover{background:rgba(0,217,126,0.06);cursor:pointer}
+.req-item.tracked{background:rgba(0,217,126,0.05);border-left:3px solid var(--g)}
+
+/* BOTTOM ROW */
+.bottom-row{display:grid;grid-template-columns:1fr 1fr;gap:20px}
+
+/* RECENT REQUESTS */
+.req-list{padding:0}
+.req-item{
+  display:flex;align-items:center;gap:12px;
+  padding:12px 18px;border-bottom:1px solid rgba(255,255,255,0.04);
+  transition:background 0.2s;cursor:pointer;
+}
+.req-item:last-child{border-bottom:none}
+.req-item:hover{background:rgba(0,217,126,0.04)}
+.req-type-ico{
+  width:36px;height:36px;border-radius:9px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:16px;
+}
+.req-ico-pending{background:rgba(240,180,41,0.12);border:1px solid rgba(240,180,41,0.2)}
+.req-ico-active{background:rgba(56,189,248,0.1);border:1px solid rgba(56,189,248,0.2)}
+.req-ico-done{background:rgba(0,217,126,0.1);border:1px solid rgba(0,217,126,0.2)}
+.req-info{flex:1;min-width:0}
+.req-title{font-size:13px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.req-meta{font-size:11px;color:var(--muted);margin-top:2px;font-family:'JetBrains Mono',monospace}
+.req-status-pill{
+  padding:4px 10px;border-radius:100px;
+  font-size:10px;font-weight:700;font-family:'JetBrains Mono',monospace;
+  white-space:nowrap;
+}
+.pill-pending{background:rgba(240,180,41,0.1);color:var(--warn);border:1px solid rgba(240,180,41,0.2)}
+.pill-accepted{background:rgba(56,189,248,0.1);color:var(--info);border:1px solid rgba(56,189,248,0.2)}
+.pill-ongoing{background:rgba(168,85,247,0.1);color:#c084fc;border:1px solid rgba(168,85,247,0.2)}
+.pill-completed{background:rgba(0,217,126,0.1);color:var(--g);border:1px solid rgba(0,217,126,0.2)}
+
+/* NOTIFICATION PANEL */
+.notif-panel{
+  position:fixed;top:60px;right:20px;width:320px;
+  background:var(--d2);border:1px solid rgba(0,217,126,0.15);
+  border-radius:var(--r2);z-index:100;
+  box-shadow:0 20px 60px rgba(0,0,0,0.5);
+  display:none;animation:slideDown 0.25s ease;
+}
+.notif-panel.open{display:block}
+@keyframes slideDown{from{opacity:0;transform:translateY(-10px)}to{opacity:1;transform:translateY(0)}}
+.notif-header{padding:14px 16px;border-bottom:1px solid rgba(0,217,126,0.08);display:flex;justify-content:space-between;align-items:center}
+.notif-title{font-size:13px;font-weight:700}
+.notif-clear{font-size:11px;color:var(--g);cursor:pointer;font-family:'JetBrains Mono',monospace}
+.notif-list{max-height:300px;overflow-y:auto}
+.notif-item{padding:12px 16px;border-bottom:1px solid rgba(255,255,255,0.04);display:flex;gap:10px}
+.notif-item:last-child{border-bottom:none}
+.notif-item-ico{width:30px;height:30px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;flex-shrink:0}
+.ni-green{background:rgba(0,217,126,0.1)}
+.ni-warn{background:rgba(240,180,41,0.1)}
+.ni-info{background:rgba(56,189,248,0.1)}
+.notif-item-text{font-size:12px;color:var(--text);line-height:1.5}
+.notif-item-time{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px}
+
+/* SUCCESS TOAST */
+.toast{
+  position:fixed;bottom:24px;right:24px;z-index:200;
+  background:var(--d2);border:1px solid rgba(0,217,126,0.3);
+  border-radius:var(--r2);padding:14px 18px;
+  display:flex;align-items:center;gap:12px;
+  box-shadow:0 12px 40px rgba(0,0,0,0.5);
+  transform:translateX(120%);transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  max-width:320px;
+}
+.toast.show{transform:translateX(0)}
+.toast-ico{font-size:22px}
+.toast-title{font-size:13px;font-weight:700;color:var(--text)}
+.toast-msg{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* MODAL */
+.overlay{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,0.7);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex !important;animation:fadeIn 0.2s ease}
+@keyframes fadeIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--d2);border:1px solid rgba(0,217,126,0.2);border-radius:var(--r3);width:100%;max-width:440px;overflow:hidden;animation:modalIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both}
+@keyframes modalIn{from{transform:scale(0.85) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.modal-bar{height:3px;background:linear-gradient(90deg,var(--g3),var(--g),var(--acc2))}
+.modal-body{padding:28px}
+.modal-close-btn{float:right;background:none;border:none;color:var(--muted);font-size:20px;cursor:pointer;margin-top:-4px}
+.modal-close-btn:hover{color:var(--danger)}
+.modal-title{font-size:20px;font-weight:800;margin-bottom:4px}
+.modal-sub{font-size:13px;color:var(--muted);margin-bottom:20px}
+.reward-row{display:flex;align-items:center;gap:14px;padding:16px;background:rgba(0,217,126,0.08);border:1px solid rgba(0,217,126,0.2);border-radius:var(--r);margin-bottom:20px}
+.reward-ico{font-size:32px}
+.reward-pts-big{font-size:28px;font-weight:900;color:var(--g)}
+.reward-label{font-size:12px;color:var(--muted)}
+.modal-btn{width:100%;padding:12px;border-radius:9px;background:var(--g);color:var(--dark);border:none;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s}
+.modal-btn:hover{background:var(--acc2)}
+
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+
+/* SCROLLBAR */
+::-webkit-scrollbar{width:4px;height:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(0,217,126,0.2);border-radius:4px}
+
+@media(max-width:1200px){.main-grid{grid-template-columns:1fr}.right-col{display:grid;grid-template-columns:1fr 1fr;gap:20px}}
+@media(max-width:900px){.stats-row{grid-template-columns:1fr 1fr}.bottom-row{grid-template-columns:1fr}.sidebar{display:none}}
+
+/* ════════════════════════════════
+   MOBILE SIDEBAR — hamburger drawer
+   ════════════════════════════════ */
+
+/* Hamburger button — hidden on desktop */
+.hamburger-btn {
+  display: none;
+  align-items: center;
+  justify-content: center;
+  flex-direction: column;
+  gap: 5px;
+  width: 40px; height: 40px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(0,217,126,0.25);
+  border-radius: 10px;
+  cursor: pointer;
+  padding: 10px;
+  flex-shrink: 0;
+  transition: background 0.2s, border-color 0.2s;
+}
+.hamburger-btn:hover {
+  background: rgba(0,217,126,0.1);
+  border-color: rgba(0,217,126,0.5);
+}
+.hamburger-btn span {
+  display: block;
+  width: 18px; height: 2px;
+  background: var(--g);
+  border-radius: 2px;
+  transition: transform 0.3s ease, opacity 0.3s ease;
+  transform-origin: center;
+}
+.hamburger-btn.is-open span:nth-child(1) { transform: translateY(7px) rotate(45deg); }
+.hamburger-btn.is-open span:nth-child(2) { opacity: 0; transform: scaleX(0); }
+.hamburger-btn.is-open span:nth-child(3) { transform: translateY(-7px) rotate(-45deg); }
+
+/* Dark overlay behind the drawer */
+#sidebarOverlay {
+  display: none;
+  position: fixed;
+  inset: 0;
+  z-index: 150;
+  background: rgba(0,0,0,0);
+  transition: background 0.32s ease;
+  pointer-events: none;
+}
+#sidebarOverlay.visible {
+  background: rgba(0,0,0,0.65);
+  pointer-events: all;
+}
+
+/* ── Mobile breakpoint ── */
+@media (max-width: 768px) {
+  .hamburger-btn { display: flex; }
+
+  /* Sidebar becomes a fixed off-canvas drawer */
+  .sidebar {
+    display: flex !important;
+    position: fixed !important;
+    left: -270px !important;
+    top: 0; bottom: 0;
+    width: 260px !important;
+    min-width: 260px !important;
+    height: 100dvh !important;
+    z-index: 200 !important;
+    transition: left 0.32s cubic-bezier(0.4,0,0.2,1) !important;
+    box-shadow: none;
+    overflow-y: auto;
+  }
+  .sidebar.drawer-open {
+    left: 0 !important;
+    box-shadow: 6px 0 40px rgba(0,0,0,0.7) !important;
+  }
+
+  /* Show the overlay */
+  #sidebarOverlay { display: block; }
+
+  /* Body: keep flex but don't let sidebar take space */
+  body { overflow-x: hidden; }
+
+  /* Main content fills full width */
+  .main {
+    width: 100% !important;
+    min-width: 0 !important;
+    overflow-x: hidden;
+  }
+
+  /* Topbar */
+  .topbar { padding: 0 12px !important; }
+  .topbar-left { gap: 8px !important; }
+  .page-title { font-size: 14px !important; }
+  .breadcrumb { display: none !important; }
+  .topbar-right { gap: 8px !important; }
+  .logout-btn { font-size: 12px !important; padding: 6px 10px !important; }
+  .status-pill { display: none !important; }
+
+  /* Content padding tighter */
+  .content { padding: 14px !important; gap: 14px !important; }
+
+  /* Stat cards — 2 columns */
+  .stats-row { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .stat-card { padding: 13px !important; min-height: 88px !important; }
+  .stat-val { font-size: 24px !important; }
+  .stat-eyebrow { font-size: 10px !important; }
+  .stat-icon { font-size: 22px !important; }
+
+  /* Main grid: single column */
+  .main-grid { grid-template-columns: 1fr !important; gap: 14px !important; }
+
+  /* Map */
+  .map-area, #leafletMap { height: 220px !important; }
+
+  /* Form layout */
+  .form-grid-2 { grid-template-columns: 1fr !important; }
+
+ /* Points */
+  .pts-big { font-size: 36px !important; }
+  .pts-tier { 
+    flex-direction: column !important; 
+    gap: 10px !important; 
+  }
+  .tier-chip { 
+    width: 100% !important; 
+  }
+
+  /* Hero banners */
+  .complaint-hero, .redeem-hero {
+    flex-direction: column !important;
+    gap: 12px !important;
+    padding: 18px !important;
+    align-items: flex-start !important;
+  }
+  .hero-right, .hero-stat { text-align: left !important; }
+  .hero-pts-big, .hero-stat-val { font-size: 30px !important; }
+  .hero-left h2 { font-size: 19px !important; }
+  .hero-left p { font-size: 12px !important; }
+
+  /* Coupon grid */
+  .coupons-grid { grid-template-columns: 1fr !important; gap: 12px !important; }
+
+  /* Mini stats */
+  .mini-stats { grid-template-columns: 1fr 1fr !important; gap: 10px !important; }
+  .ms-val { font-size: 22px !important; }
+
+  /* Filter chips */
+  .filter-row { gap: 6px !important; flex-wrap: wrap !important; }
+  .filter-chip { padding: 6px 12px !important; font-size: 11px !important; }
+
+  /* Right column */
+  .right-col { gap: 14px !important; }
+
+  /* Profile popover */
+  .profile-popover { right: 8px !important; left: 8px !important; width: auto !important; }
+
+  /* Redeem modal */
+  .redeem-modal-box { width: 95vw !important; padding: 18px !important; }
+}
+</style>
+</head>
+<body>
+
+<!-- MAP BG -->
+<div class="map-bg">
+  <svg viewBox="0 0 1440 900" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="g1" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M60 0L0 0 0 60" fill="none" stroke="rgba(0,217,126,0.2)" stroke-width="0.5"/></pattern>
+      <pattern id="g2" width="300" height="300" patternUnits="userSpaceOnUse"><path d="M300 0L0 0 0 300" fill="none" stroke="rgba(0,217,126,0.3)" stroke-width="1"/></pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#g1)"/>
+    <rect width="100%" height="100%" fill="url(#g2)"/>
+    <path d="M0,200 Q400,180 800,240 T1440,200" stroke="rgba(0,217,126,0.15)" stroke-width="1" fill="none"/>
+    <path d="M0,600 Q400,580 800,620 T1440,590" stroke="rgba(0,217,126,0.1)" stroke-width="1" fill="none"/>
+  </svg>
+  <div class="scan-line"></div>
+</div>
+<div class="noise"></div>
+
+<!-- SIDEBAR -->
+<div id="sidebarOverlay"></div>
+  <aside class="sidebar">
+  <div class="sidebar-brand">
+    <div class="brand-row">
+      <div class="brand-ico">♻</div>
+      <div class="brand-name">Eco<span>Vault</span></div>
+    </div>
+  </div>
+
+  <div style="padding:12px 12px 8px">
+    <div class="user-card">
+      <div class="user-avatar" id="sidebarAvatar">?</div>
+      <div class="user-name" id="sidebarName">—</div>
+      <div class="user-id" id="sidebarId">—</div>
+      <div class="user-pts">
+        <div class="pts-badge"><span id="sidebarPts">0</span> pts</div>
+        <div class="tier-inline-badge" id="sidebarTierBadge">—</div>
+      </div>
+    </div>
+  </div>
+
+  <div class="nav-section">
+    <div class="nav-sec-label">Main</div>
+    <button class="nav-item active" id="nav-dashboard" onclick="scrollToSection('top')"><span class="nav-icon">📊</span>Dashboard</button>
+    <button class="nav-item" id="nav-submit" onclick="scrollToSection('section-submit')"><span class="nav-icon">📍</span>Submit Report</button>
+    <button class="nav-item" id="nav-requests" onclick="scrollToSection('section-requests')"><span class="nav-icon">📋</span>My Requests</button>
+    <button class="nav-item" id="nav-points" onclick="scrollToSection('section-points')"><span class="nav-icon">🌿</span>Green Points</button>
+    <button class="nav-item" id="nav-redeem" onclick="window.location.href='redeemPoints.html'"><span class="nav-icon">🎁</span>Redeem Points</button>
+    <button class="nav-item" id="nav-map" onclick="scrollToSection('section-submit')"><span class="nav-icon">🗺️</span>Live Map</button>
+    <button class="nav-item" onclick="window.location.href='complaint.html'" style="color:#ef4444;border:1px solid rgba(239,68,68,0.15);background:rgba(239,68,68,0.05);">
+      <span class="nav-icon">🚨</span>Raise Complaint
+    </button>
+
+    
+  </div>
+
+  
+</aside>
+
+<!-- MAIN -->
+<div class="main">
+
+  <!-- TOP BAR -->
+  <div class="topbar">
+    <div class="topbar-left">
+      <button class="hamburger-btn" id="hamburgerBtn" aria-label="Open navigation"><span></span><span></span><span></span></button>
+      <div>
+        <div class="page-title">Citizen Dashboard</div>
+        <div class="breadcrumb">EcoVault / Dashboard</div>
+      </div>
+    </div>
+    <div class="topbar-right">
+      <!-- <div class="status-pill"><span class="live-dot"></span>System Live</div> -->
+      <!-- <div class="notif-btn" onclick="toggleNotif()" id="notifBtn">
+        🔔
+        <div class="notif-dot" id="notifDot"></div>
+      </div> -->
+        <button class="logout-btn" onclick="logout()">
+        <span>🚪</span> Logout
+        </button>
+      <div style="width:52px;height:34px;border-radius:50%;background:linear-gradient(135deg,var(--g3),var(--g2));display:flex;align-items:center;justify-content:center;font-size:13px;font-weight:700;cursor:pointer;border:2px solid rgba(0,217,126,0.3)" id="topbarAvatar">?</div>
+    </div>
+  </div>
+
+  <!-- PROFILE POPOVER -->
+  <div class="profile-popover" id="profilePopover">
+    <div class="profile-popover-content">
+      <div class="profile-header">
+        <div class="profile-avatar-wrapper">
+          <div class="profile-avatar-large" id="popoverAvatar">?</div>
+          <div class="profile-camera-overlay" id="cameraOverlay">📷</div>
+        </div>
+      </div>
+      <div class="profile-name" id="popoverName">—</div>
+      <div style="font-size:11px;color:var(--muted);margin-top:8px;font-family:'JetBrains Mono',monospace;text-align:center">Click camera icon to change picture</div>
+      <input type="file" id="profilePictureInput" accept="image/*" style="display:none">
+    </div>
+  </div>
+
+  <!-- NOTIFICATION PANEL -->
+  <!-- <div class="notif-panel" id="notifPanel">
+    <div class="notif-header">
+      <div class="notif-title">Notifications</div>
+      <div class="notif-clear" onclick="clearNotifs()">Clear all</div>
+    </div>
+    <div class="notif-list">
+      <div style="padding:20px;text-align:center;font-size:12px;color:var(--muted)">No new notifications</div>
+    </div>
+  </div> -->
+
+  <!-- CONTENT -->
+  <div class="content" id="top">
+
+    <!-- STAT CARDS -->
+    <div class="stats-row">
+      <div class="stat-card green">
+        <div class="stat-eyebrow">Green Points</div>
+        <div class="stat-val green" id="animPts">0</div>
+        <div class="stat-icon">🌿</div>
+      </div>
+      <div class="stat-card amber">
+        <div class="stat-eyebrow">Total Requests</div>
+        <div class="stat-val amber" id="valTotal">0</div>
+        <div class="stat-icon">📋</div>
+      </div>
+      <div class="stat-card blue">
+        <div class="stat-eyebrow">Areas Cleaned</div>
+        <div class="stat-val blue" id="valCleaned">0</div>
+        <div class="stat-icon">🏙️</div>
+      </div>
+      <div class="stat-card red">
+        <div class="stat-eyebrow">Pending</div>
+        <div class="stat-val red" id="valPending">0</div>
+        <div class="stat-icon">⏳</div>
+      </div>
+    </div>
+
+    <!-- MAIN GRID -->
+    <div class="main-grid">
+
+      <!-- LEFT: MAP + FORM -->
+      <div class="map-section" id="section-submit">
+        <div class="panel" style="overflow:visible">
+          <div class="panel-header">
+            <div class="panel-title">
+              📍 Report Location
+              <span class="panel-tag">TAP MAP TO PIN</span>
+            </div>
+            <div style="display:flex;gap:8px;align-items:center">
+              <div id="mapCoordDisplay" style="font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace">No pin placed</div>
+            </div>
+          </div>
+          <div class="map-area" id="mapArea">
+            <div id="leafletMap"></div>
+
+            <div class="map-controls" style="z-index:10">
+              <button class="map-ctrl-btn" title="Clear Pin" onclick="clearPin()">✕</button>
+            </div>
+          </div>
+
+          <div class="map-legend">
+            <div class="leg-item"><div class="leg-dot" style="background:#ef4444"></div>Your Pin</div>
+          </div>
+
+          <!-- SUBMIT FORM -->
+          <div style="border-top:1px solid rgba(0,217,126,0.08);padding:16px">
+            <div style="font-size:12px;font-weight:700;color:var(--text);margin-bottom:14px;display:flex;align-items:center;gap:8px">
+              📝 <span>Submit Waste Report</span>
+              <span style="font-size:10px;color:var(--g);font-family:'JetBrains Mono',monospace;background:rgba(0,217,126,0.08);border:1px solid rgba(0,217,126,0.15);padding:2px 8px;border-radius:4px">+50 pts</span>
+            </div>
+            <div style="display:grid;grid-template-columns:1fr 1fr;gap:10px">
+              <div class="form-row">
+                <label>Waste Type</label>
+                <select id="wasteType">
+                  <option value="">Select type...</option>
+                  <option>Organic Waste</option>
+                  <option>Plastic</option>
+                  <option>Paper</option>
+                  <option>Metal</option>
+                  <option>Electronic</option>
+                  <option>Other</option>
+                </select>
+              </div>
+              <div class="form-row">
+                <label>Severity</label>
+                <select id="severity">
+                  <option value="">Select level...</option>
+                  <option>Low</option>
+                  <option>Medium</option>
+                  <option>High</option>
+                </select>
+              </div>
+            </div>
+            <div class="form-row">
+              <label>Location Address</label>
+              <input type="text" id="locationAddr" placeholder="Will auto-fill from pin or type manually..."/>
+            </div>
+            <div class="form-row">
+              <label>Description (optional)</label>
+              <textarea rows="2" placeholder="Describe the waste issue briefly..."></textarea>
+            </div>
+            <div class="form-row">
+              <label>Pin Coordinates</label>
+              <div class="coords-box" id="coordsBox">📍 No pin placed — click the map above</div>
+            </div>
+
+            <div class="form-row">
+              <label>📸 Upload Waste Photo</label>
+              <input type="file" id="imageUpload" accept="image/*" style="padding: 10px; cursor: pointer; background: rgba(255,255,255,0.04); border: 1px solid rgba(255,255,255,0.08); border-radius: 8px; width: 100%; color: var(--text);"/>
+            </div>
+
+            <button type="button" class="submit-req" id="submitReqBtn" onclick="submitRequest(event)">
+             <span>📤</span> Submit Report & Earn Points
+            </button>
+          </div>
+        </div>
+      </div>
+
+      <!-- RIGHT COLUMN -->
+      <div class="right-col">
+
+        <!-- GREEN POINTS PANEL -->
+        <div class="panel points-panel" id="section-points">
+          <div class="panel-header">
+            <div class="panel-title">🌿 Green Points</div>
+          </div>
+          <div style="padding:16px 18px 8px">
+            <div class="pts-big" id="ptsDisplay">0</div>
+            <div class="pts-sub">—</div>
+          </div>
+          <div class="pts-progress-wrap">
+            <div class="pts-bar-label"><span>Silver (200)</span><span>Gold (500)</span><span>Platinum (1000)</span></div>
+            <div class="pts-bar-track"><div class="pts-bar-fill" id="ptsBar" style="width:0%"></div></div>
+          </div>
+          <div class="pts-tier" id="tierChipsRow">
+            <div class="tier-chip" id="tierBronze"><span class="tier-ico">🥉</span>Bronze</div>
+            <div class="tier-chip" id="tierSilver"><span class="tier-ico">🥈</span>Silver</div>
+            <div class="tier-chip" id="tierGold"><span class="tier-ico">🥇</span>Gold</div>
+            <div class="tier-chip" id="tierPlatinum"><span class="tier-ico">💎</span>Platinum</div>
+          </div>
+        </div>
+
+        <!-- REQUEST STATUS TRACKER -->
+        <div class="panel tracker-panel">
+          <div class="panel-header">
+            <div class="panel-title">📡 Request Tracker</div>
+            <div style="display:flex;align-items:center;gap:8px">
+              <div class="tracker-live" id="trackerLive" style="display:none">
+                <div class="tracker-live-dot"></div>LIVE
+              </div>
+              <div style="font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace" id="trackerReqId">—</div>
+            </div>
+          </div>
+
+          <!-- Worker info chip (shown when assigned) -->
+          <div class="tracker-worker" id="trackerWorkerChip" style="display:none">
+            <div class="tw-avatar" id="trackerWorkerInitial">?</div>
+            <div>
+              <div class="tw-name" id="trackerWorkerName">—</div>
+              <div class="tw-meta" id="trackerWorkerMeta">—</div>
+            </div>
+          </div>
+
+          <!-- Steps stepper -->
+          <div class="tracker-steps" id="trackerSteps">
+            <div class="tracker-empty">
+              <div class="tracker-empty-ico">📡</div>
+              <div class="tracker-empty-title">No request selected</div>
+              <div class="tracker-empty-sub">Submit a report or click any<br>request below to track it</div>
+            </div>
+          </div>
+
+          <div style="padding:0 18px 16px;display:flex;gap:8px">
+            <button id="trackerRefreshBtn" onclick="refreshTracker()" style="flex:1;padding:9px;border-radius:8px;background:rgba(0,217,126,0.07);border:1px solid rgba(0,217,126,0.15);color:var(--g);font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s;display:none" onmouseover="this.style.background='rgba(0,217,126,0.14)'" onmouseout="this.style.background='rgba(0,217,126,0.07)'">
+              ↻ Refresh Status
+            </button>
+            <button onclick="scrollToSection('section-requests')" style="flex:1;padding:9px;border-radius:8px;background:rgba(255,255,255,0.04);border:1px solid rgba(255,255,255,0.08);color:var(--muted);font-family:'Outfit',sans-serif;font-size:12px;cursor:pointer;transition:all 0.2s" onmouseover="this.style.borderColor='rgba(0,217,126,0.2)';this.style.color='var(--text)'" onmouseout="this.style.borderColor='rgba(255,255,255,0.08)';this.style.color='var(--muted)'">
+              View All Requests →
+            </button>
+          </div>
+        </div>
+
+      </div>
+    </div>
+
+    <!-- BOTTOM ROW -->
+    <div class="bottom-row">
+
+      <!-- RECENT REQUESTS -->
+      <div class="panel" id="section-requests">
+        <div class="panel-header">
+          <div class="panel-title">📋 My Requests</div>
+          <div id="viewAllBtn" onclick="toggleViewAll()" style="font-size:11px;color:var(--g);cursor:pointer;font-family:'JetBrains Mono',monospace;transition:opacity 0.2s;display:none">View all →</div>
+        </div>
+        <div class="req-list">
+          <div style="padding:24px;text-align:center;font-size:12px;color:var(--muted)">No requests submitted yet</div>
+        </div>
+      </div>
+
+      <!-- REDEEM POINTS CTA -->
+      <div class="panel" id="section-redeem" style="display:flex;flex-direction:column;justify-content:center;align-items:center;padding:36px 28px;text-align:center;background:linear-gradient(135deg,rgba(0,217,126,0.06) 0%,rgba(15,32,24,0.98) 100%);border:1px solid rgba(0,217,126,0.15);position:relative;overflow:hidden;">
+        <div style="position:absolute;top:-40px;right:-40px;width:180px;height:180px;border-radius:50%;background:radial-gradient(circle,rgba(0,217,126,0.08) 0%,transparent 70%);pointer-events:none"></div>
+        <div style="font-size:52px;margin-bottom:16px;filter:drop-shadow(0 0 16px rgba(0,217,126,0.3))">🎁</div>
+        <div style="font-size:18px;font-weight:800;color:var(--text);margin-bottom:8px">Redeem Green Points</div>
+        <div style="font-size:13px;color:var(--muted);line-height:1.7;max-width:280px;margin-bottom:6px">
+          Turn your eco efforts into real rewards. Unlock coupons from Swiggy, Amazon, Zomato, Flipkart &amp; more.
+        </div>
+        <div style="margin:14px 0;padding:10px 20px;background:rgba(0,217,126,0.08);border:1px solid rgba(0,217,126,0.2);border-radius:10px;font-family:'JetBrains Mono',monospace;font-size:13px;color:var(--g);font-weight:700">
+          🌿 Balance: <span id="ctaPointsDisplay">0</span> pts
+        </div>
+        <div style="display:flex;gap:10px;flex-wrap:wrap;justify-content:center;margin-bottom:20px;font-size:11px;color:var(--dim)">
+          <span>🍔 Swiggy</span><span>📦 Amazon</span><span>🍕 Zomato</span><span>🛍️ Flipkart</span><span>🎬 BookMyShow</span>
+        </div>
+        <button onclick="window.location.href='redeemPoints.html'" style="padding:13px 32px;border-radius:10px;background:var(--g);color:var(--dark);border:none;font-family:'Outfit',sans-serif;font-size:14px;font-weight:800;cursor:pointer;transition:all 0.2s;display:flex;align-items:center;gap:8px;box-shadow:0 8px 24px rgba(0,217,126,0.25)" onmouseover="this.style.background='var(--acc2)';this.style.transform='translateY(-2px)'" onmouseout="this.style.background='var(--g)';this.style.transform='translateY(0)'">
+          <span>🎁</span> Go to Rewards Store →
+        </button>
+        <div style="margin-top:12px;font-size:10px;color:var(--dim);font-family:'JetBrains Mono',monospace">POWERED BY ECOVAULT REWARDS</div>
+      </div>
+
+    </div>
+  </div><!-- /content -->
+</div><!-- /main -->
+
+<!-- SUCCESS MODAL -->
+<div class="overlay" id="successOverlay">
+  <div class="modal">
+    <div class="modal-bar"></div>
+    <div class="modal-body">
+      <button class="modal-close-btn" onclick="closeModal()">✕</button>
+      <div style="font-size:40px;margin-bottom:12px">🎉</div>
+      <div class="modal-title">Report Submitted!</div>
+      <div class="modal-sub">Your waste report has been received. A field team will be assigned shortly.</div>
+      <div class="reward-row">
+        <div class="reward-ico">🌿</div>
+        <div>
+          <div class="reward-pts-big">+50 pts</div>
+          <div class="reward-label">Green Points earned for this report</div>
+        </div>
+      </div>
+      <div style="font-size:12px;color:var(--muted);margin-bottom:20px;padding:10px 12px;background:rgba(255,255,255,0.03);border-radius:8px;border:1px solid rgba(255,255,255,0.06)">
+        📍 Location pinned successfully<br/>
+        ⏱ Estimated response: 2–4 hours
+      </div>
+      <button class="modal-btn" onclick="closeModal()">Got it, Track My Request →</button>
+    </div>
+  </div>
+</div>
+
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-ico">🌿</div>
+  <div>
+    <div class="toast-title">Points Earned!</div>
+    <div class="toast-msg" id="toastMsg">+50 Green Points added to your account</div>
+  </div>
+</div>
+
+<script>
+  // Auth Guard: Redirect to welcome page if not logged in
+if (localStorage.getItem('userRole') !== 'citizen') {
+    window.location.href = 'welcome_page-dynamic.html';
+}
+
+// Global user data from localStorage
+const getUserId = () => localStorage.getItem('userId');
+const getUserName = () => localStorage.getItem('userName');
+
+// Animate counter
+function animateCounter(el, target, duration) {
+  let start = 0, step = target / (duration / 16);
+  const tick = () => {
+    start = Math.min(start + step, target);
+    el.textContent = Math.round(start).toLocaleString();
+    if (start < target) requestAnimationFrame(tick);
+  };
+  requestAnimationFrame(tick);
+}
+window.addEventListener('load', async () => {
+    // 1. Update UI with stored name
+    const name = getUserName() || '—';
+    const initial = name.charAt(0).toUpperCase();
+    document.querySelector('.user-name').textContent = name;
+    document.querySelector('.user-avatar').textContent = initial;
+    document.getElementById('sidebarName').textContent = name;
+    document.getElementById('sidebarAvatar').textContent = initial;
+    document.getElementById('topbarAvatar').textContent = initial;
+    document.getElementById('popoverAvatar').textContent = initial;
+    document.getElementById('popoverName').textContent = name;
+    const uid = getUserId() || '—';
+    document.getElementById('sidebarId').textContent = uid;
+    // 2. Load profile picture from backend
+    await loadProfilePictureFromDB();
+    // 3. Init Leaflet map
+    initLeafletMap();
+    refreshUserUI();      // Fetch points & stats
+    loadMyRequests();     // Fetch active request list
+    // 4. Setup profile popover
+    setupProfilePopover();
+});
+    // 2. Fetch fresh points/data from backend
+async function refreshUserUI() {
+  try {
+    const response = await fetch(`http://127.0.0.1:5000/api/user/${localStorage.getItem('userId')}`);
+    const userData = await response.json();
+        
+      if (userData.success) {
+        // Update Points
+        animateCounter(document.getElementById('animPts'), userData.points, 1200);
+        document.getElementById('ptsDisplay').textContent = userData.points;
+        document.getElementById('ptsBar').style.width = Math.min((userData.points / 1500 * 100), 100) + '%';
+        document.getElementById('sidebarPts').textContent = userData.points;
+        const ctaEl = document.getElementById('ctaPointsDisplay');
+        if (ctaEl) ctaEl.textContent = userData.points;
+        
+        // Update tier display
+        updateTierDisplay(userData.points);
+        
+        // Update New Stats
+        animateCounter(document.getElementById('valTotal'), userData.totalRequests, 1000);
+        animateCounter(document.getElementById('valCleaned'), userData.areasCleaned, 1000);
+        animateCounter(document.getElementById('valPending'), userData.pendingRequests, 1000);
+      }
+    } catch (err) {
+        console.error("Failed to fetch user data:", err);
+    }
+}
+
+// ── TIER DISPLAY ──
+// Thresholds: Bronze 0-199 | Silver 200-499 | Gold 500-999 | Platinum 1000+
+function updateTierDisplay(points) {
+  const tiers = [
+    { id:'tierBronze',   key:'bronze',   label:'🥉Bronze',   min:0,    max:199,   bg:'rgba(176,141,87,0.12)',  border:'rgba(176,141,87,0.3)',  color:'#c8a96e' },
+    { id:'tierSilver',   key:'silver',   label:'🥈Silver',   min:200,  max:499,   bg:'rgba(160,160,180,0.12)', border:'rgba(160,160,180,0.3)', color:'#c0c0c8' },
+    { id:'tierGold',     key:'gold',     label:'🥇Gold',     min:500,  max:999,   bg:'rgba(255,193,7,0.12)',   border:'rgba(255,193,7,0.3)',   color:'#ffc107' },
+    { id:'tierPlatinum', key:'platinum', label:'💎Platinum', min:1000, max:Infinity, bg:'rgba(0,217,126,0.12)', border:'rgba(0,217,126,0.3)',  color:'var(--g)' }
+  ];
+  const current = tiers.find(t => points >= t.min && points <= t.max) || tiers[0];
+
+  // Update tier chips in green points panel
+  tiers.forEach(t => {
+    const el = document.getElementById(t.id);
+    if (!el) return;
+    el.classList.toggle('active', t.key === current.key);
+  });
+
+  // Update sidebar tier badge
+  const badge = document.getElementById('sidebarTierBadge');
+  if (badge) {
+    badge.textContent = current.label;
+    badge.style.background = current.bg;
+    badge.style.borderColor = current.border;
+    badge.style.color = current.color;
+  }
+}
+
+// ── LEAFLET MAP INIT ──
+let leafletMap, userPin;
+const BATHINDA = [30.2110, 74.9455];
+
+function initLeafletMap() {
+  leafletMap = L.map('leafletMap', {
+    center: BATHINDA,
+    zoom: 14,
+    zoomControl: true,
+    attributionControl: true
+  });
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© <a href="https://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+    maxZoom: 19
+  }).addTo(leafletMap);
+
+  leafletMap.on('click', function(e) {
+    placePinLeaflet(e.latlng.lat, e.latlng.lng);
+  });
+}
+
+function makePinIcon() {
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:26px;height:26px;border-radius:50% 50% 50% 0;
+      background:#ef4444;transform:rotate(-45deg);
+      display:flex;align-items:center;justify-content:center;
+      box-shadow:0 4px 14px rgba(0,0,0,0.5);
+      border:2px solid rgba(255,255,255,0.3)">
+      <span style="transform:rotate(45deg);font-size:11px">📍</span>
+    </div>
+    <div style="width:2px;height:8px;background:rgba(255,255,255,0.4);margin:0 auto"></div>`,
+    iconSize: [26, 36], iconAnchor: [13, 36]
+  });
+}
+
+function placePinLeaflet(lat, lng) {
+  if (userPin) leafletMap.removeLayer(userPin);
+  userPin = L.marker([lat, lng], { icon: makePinIcon(), draggable: true }).addTo(leafletMap);
+  userPin.on('dragend', function(ev) {
+    const pos = ev.target.getLatLng();
+    updateCoords(pos.lat, pos.lng);
+  });
+  updateCoords(lat, lng);
+}
+
+function updateCoords(lat, lng) {
+  const latStr = parseFloat(lat).toFixed(4);
+  const lngStr = parseFloat(lng).toFixed(4);
+  // FIX: Store numeric values to avoid parsing display strings later
+  pinLat = parseFloat(lat);
+  pinLng = parseFloat(lng);
+  const _cb = document.getElementById('coordsBox'); if(_cb) _cb.textContent = `📍 ${latStr}°N, ${lngStr}°E`;
+  const _mcd = document.getElementById('mapCoordDisplay'); if(_mcd) _mcd.textContent = `${latStr}°N, ${lngStr}°E`;
+  const _mt1 = document.getElementById('mapTip'); if(_mt1) _mt1.style.display = 'none';
+  pinPlaced = true;
+  fetch(`https://nominatim.openstreetmap.org/reverse?lat=${lat}&lon=${lng}&format=json`)
+    .then(r => r.json())
+    .then(d => {
+      if (d && d.display_name) {
+        const short = d.display_name.split(',').slice(0, 3).join(', ');
+        document.getElementById('locationAddr').value = short;
+      }
+    }).catch(() => {
+      document.getElementById('locationAddr').value = `${latStr}°N, ${lngStr}°E`;
+    });
+}
+
+// Map pin
+let pinPlaced = false;
+let pinLat = null;
+let pinLng = null;
+function placePin(e) { /* handled by Leaflet click */ }
+
+function clearPin() {
+  if (userPin) { leafletMap.removeLayer(userPin); userPin = null; }
+  const _cb2 = document.getElementById('coordsBox'); if(_cb2) _cb2.textContent = '📍 No pin placed — click the map above';
+  const _mcd2 = document.getElementById('mapCoordDisplay'); if(_mcd2) _mcd2.textContent = 'No pin placed';
+  const _mt2 = document.getElementById('mapTip'); if(_mt2) _mt2.style.display = 'block';
+  const _la = document.getElementById('locationAddr'); if(_la) _la.value = '';
+  pinPlaced = false;
+  pinLat = null;
+  pinLng = null;
+}
+
+
+
+// Submit request
+let reqCounter = 45;
+async function submitRequest(event) {
+    if (event) {
+        event.preventDefault();
+        event.stopPropagation();
+        loadMyRequests();
+    }
+
+    const btn = document.getElementById('submitReqBtn');
+    const type = document.getElementById('wasteType').value;
+    const address = document.getElementById('locationAddr').value;
+    const coordsBox = document.getElementById('mapCoordDisplay').textContent;
+    const fileInput = document.getElementById('imageUpload');
+
+    // 1. Basic Validation
+    if (!fileInput) {
+        console.error("Could not find the file input element with ID 'imageUpload'");
+        return;
+    }
+
+    if (!type || !address || !fileInput.files[0] || coordsBox.includes("No pin")) {
+        showToast('⚠️', 'Missing Info', 'Please fill all fields and upload an image.');
+        return;
+    }
+
+    const formData = new FormData();
+    formData.append('citizenId', localStorage.getItem('userId'));
+    formData.append('imageUpload', fileInput.files[0]);
+    formData.append('garbageType', type);
+    formData.append('address', address);
+    
+    // FIX: Use stored numeric pin coordinates instead of parsing display text
+    formData.append('lat', pinLat);
+    formData.append('lng', pinLng);
+
+    try {
+        btn.disabled = true;
+        btn.innerHTML = "<span>⏳</span> Scanning with AI...";
+
+        const response = await fetch('http://127.0.0.1:5000/api/reports', {
+            method: 'POST',
+            body: formData
+        });
+
+        const result = await response.json();
+
+        if (response.ok && result.success) {
+            // SUCCESS: AI verified garbage and DB saved
+            document.getElementById('successOverlay').classList.add('open');
+            
+            // Re-fetch user data and requests; tracker will auto-select the new report
+            await refreshUserUI();
+            await loadMyRequests();
+        } else {
+            // REJECTED: AI found no garbage or server error
+            showToast('❌', 'Verification Failed', result.message || "Invalid submission");
+        }
+    } catch (err) {
+        console.error("Submission error:", err);
+        showToast('❌', 'Error', 'Connection to server failed.');
+    } finally {
+        btn.disabled = false;
+        btn.innerHTML = "<span>📤</span> Submit Report & Earn Points";
+    }
+}
+
+// In citizenDASH.html, update your closeModal function:
+function closeModal() {
+  document.getElementById('successOverlay').classList.remove('open');
+  
+  // Reset Form
+  document.getElementById('wasteType').value = '';
+  document.getElementById('locationAddr').value = '';
+  document.getElementById('imageUpload').value = ''; 
+  clearPin();
+  
+  showToast('🌿', '+50 Green Points added!', 'Report submitted successfully');
+  // Note: Points animation is now handled automatically by refreshUserUI() which triggers when the submit succeeds!
+}
+// Toast
+function showToast(ico, title, msg) {
+  const t = document.getElementById('toast');
+  t.querySelector('.toast-ico').textContent = ico;
+  t.querySelector('.toast-title').textContent = title;
+  document.getElementById('toastMsg').textContent = msg;
+  t.classList.add('show');
+  setTimeout(() => t.classList.remove('show'), 3500);
+}
+
+// Notifications
+// function toggleNotif() {
+//   document.getElementById('notifPanel').classList.toggle('open');
+//   document.getElementById('notifDot').style.display = 'none';
+// }
+// function clearNotifs() {
+//   document.getElementById('notifPanel').querySelector('.notif-list').innerHTML =
+//     '<div style="padding:20px;text-align:center;font-size:12px;color:var(--muted)">No new notifications</div>';
+// }
+function logout() {
+    localStorage.clear(); // This wipes Paarth out so Jaideep can move in
+    window.location.href = 'welcome_page-dynamic.html';
+}
+// ── REQUESTS LIST STATE ──
+let allReports = [];
+let showingAll = false;
+const PAGE_SIZE = 5;
+
+function buildReqItem(report) {
+    const isPending   = report.status === 'pending';
+    const isAccepted  = report.status === 'accepted';
+    const statusPillClass = isPending ? 'pill-pending' : isAccepted ? 'pill-accepted' : 'pill-completed';
+    const statusIconClass = isPending ? 'req-ico-pending' : isAccepted ? 'req-ico-active' : 'req-ico-done';
+    const icon  = isPending ? '⏳' : isAccepted ? '🚛' : '✅';
+    const label = isPending ? 'PENDING' : isAccepted ? 'IN PROGRESS' : 'COMPLETED';
+    const dateString = new Date(report.timestamp).toLocaleDateString('en-IN', { day:'2-digit', month:'short', year:'numeric' });
+    const shortAddr  = (report.location.address || '').substring(0, 28) + ((report.location.address || '').length > 28 ? '…' : '');
+    return `<div class="req-item trackable" onclick="trackReport('${report._id}')" id="req-row-${report._id}">
+              <div class="req-type-ico ${statusIconClass}">${icon}</div>
+              <div class="req-info">
+                <div class="req-title">${report.garbageType}</div>
+                <div class="req-meta">📍 ${shortAddr} · ${dateString}</div>
+              </div>
+              <div class="req-status-pill ${statusPillClass}">${label}</div>
+            </div>`;
+}
+
+function renderRequestList() {
+    const listContainer = document.querySelector('.req-list');
+    const viewAllBtn = document.getElementById('viewAllBtn');
+    if (!allReports.length) {
+        listContainer.innerHTML = '<div style="padding:24px;text-align:center;font-size:12px;color:var(--muted)">No requests submitted yet</div>';
+        viewAllBtn.style.display = 'none';
+        return;
+    }
+    const visible = showingAll ? allReports : allReports.slice(0, PAGE_SIZE);
+    listContainer.innerHTML = visible.map(buildReqItem).join('');
+    // Show "View all" only when there are more than PAGE_SIZE reports
+    if (allReports.length > PAGE_SIZE) {
+        viewAllBtn.style.display = 'block';
+        viewAllBtn.textContent = showingAll ? 'Show less ↑' : `View all (${allReports.length}) →`;
+    } else {
+        viewAllBtn.style.display = 'none';
+    }
+}
+
+function toggleViewAll() {
+    showingAll = !showingAll;
+    renderRequestList();
+    // If collapsing, scroll back up to the panel header
+    if (!showingAll) {
+        document.getElementById('section-requests').scrollIntoView({ behavior: 'smooth', block: 'start' });
+    }
+}
+
+async function loadMyRequests() {
+    const userId = localStorage.getItem('userId');
+    try {
+        const response = await fetch(`http://127.0.0.1:5000/api/reports/active/${userId}`);
+        const data = await response.json();
+        allReports = (data.success && data.reports.length > 0) ? data.reports : [];
+        showingAll = false;
+        renderRequestList();
+        // Auto-track the most recent non-completed, or most recent overall
+        const mostRecent = allReports.find(r => r.status !== 'completed') || allReports[0];
+        if (mostRecent) trackReport(mostRecent._id);
+    } catch (err) {
+        console.error("Failed to load requests:", err);
+    }
+}
+
+// ── TRACKER STATE ──
+let currentTrackedId = null;
+let trackerInterval  = null;
+
+function fmt(date) {
+    if (!date) return null;
+    const d = new Date(date);
+    return d.toLocaleDateString('en-IN',{day:'2-digit',month:'short'}) + ' · ' + d.toLocaleTimeString('en-IN',{hour:'2-digit',minute:'2-digit'});
+}
+
+async function trackReport(reportId) {
+    // Highlight the selected row
+    document.querySelectorAll('.req-item').forEach(el => el.classList.remove('tracked'));
+    const row = document.getElementById('req-row-' + reportId);
+    if (row) row.classList.add('tracked');
+
+    currentTrackedId = reportId;
+
+    // Show refresh btn
+    document.getElementById('trackerRefreshBtn').style.display = 'block';
+    document.getElementById('trackerLive').style.display = 'flex';
+
+    await renderTracker(reportId);
+
+    // Poll every 20 s while page is open
+    if (trackerInterval) clearInterval(trackerInterval);
+    trackerInterval = setInterval(() => renderTracker(currentTrackedId), 20000);
+}
+
+async function refreshTracker() {
+    if (!currentTrackedId) return;
+    const btn = document.getElementById('trackerRefreshBtn');
+    btn.textContent = '⏳ Refreshing…';
+    btn.disabled = true;
+    await renderTracker(currentTrackedId);
+    btn.textContent = '↻ Refresh Status';
+    btn.disabled = false;
+}
+
+async function renderTracker(reportId) {
+    try {
+        const res  = await fetch(`http://127.0.0.1:5000/api/reports/track/${reportId}`);
+        const data = await res.json();
+        if (!data.success) return;
+
+        const r = data.report;
+        const shortId = String(r._id).slice(-8).toUpperCase();
+
+        // Header ID
+        document.getElementById('trackerReqId').textContent = '#' + shortId;
+
+        // Worker chip
+        const chip = document.getElementById('trackerWorkerChip');
+        if (r.worker) {
+            document.getElementById('trackerWorkerInitial').textContent = r.worker.fullName.charAt(0).toUpperCase();
+            document.getElementById('trackerWorkerName').textContent    = r.worker.fullName;
+            document.getElementById('trackerWorkerMeta').textContent    = (r.worker.workerID ? 'ID: ' + r.worker.workerID : '') + (r.worker.department ? ' · ' + r.worker.department : '');
+            chip.style.display = 'flex';
+        } else {
+            chip.style.display = 'none';
+        }
+
+        // Build stepper based on status
+        // Steps: submitted → assigned → in_progress → completed
+        const status      = r.status; // 'pending' | 'accepted' | 'completed'
+        const submittedAt = fmt(r.timestamp);
+        const completedAt = fmt(r.completedAt);
+
+        // Map status to step index: pending=0 active, accepted=1 active, completed=all done
+        // step state helper
+        function stepState(stepIdx) {
+            // stepIdx: 0=submitted,1=assigned,2=in_progress,3=completed
+            if (status === 'pending')   return stepIdx === 0 ? 'active' : 'pending';
+            if (status === 'accepted')  return stepIdx <= 1  ? (stepIdx < 1 ? 'done' : 'active') : 'pending';
+            if (status === 'completed') return 'done';
+            return 'pending';
+        }
+
+        // For accepted: step0=done, step1=active, step2=pending, step3=pending
+        function stepStateFull(stepIdx) {
+            if (status === 'pending') {
+                return stepIdx === 0 ? 'active' : 'pending';
+            }
+            if (status === 'accepted') {
+                if (stepIdx === 0) return 'done';
+                if (stepIdx === 1) return 'active';
+                if (stepIdx === 2) return 'active';
+                return 'pending';
+            }
+            if (status === 'completed') return 'done';
+            return 'pending';
+        }
+
+        const s0 = stepStateFull(0);
+        const s1 = stepStateFull(1);
+        const s2 = stepStateFull(2);
+        const s3 = stepStateFull(3);
+
+        function circle(state, icon) {
+            if (state === 'done')   return `<div class="step-circle">✓</div>`;
+            if (state === 'active') return `<div class="step-circle">${icon}</div>`;
+            return `<div class="step-circle" style="font-size:11px">${icon}</div>`;
+        }
+        function badgeHtml(state, label) {
+            if (state === 'done')   return `<div class="step-badge badge-done">✓ ${label}</div>`;
+            if (state === 'active') return `<div class="step-badge badge-active">● ${label}</div>`;
+            return `<div class="step-badge badge-pending">○ WAITING</div>`;
+        }
+
+        document.getElementById('trackerSteps').innerHTML = `
+          <!-- Step 0: Submitted -->
+          <div class="step ${s0}">
+            <div class="step-left">
+              ${circle(s0,'📤')}
+              <div class="step-line"></div>
+            </div>
+            <div class="step-right">
+              <div class="step-title">Report Submitted</div>
+              <div class="step-desc">${r.garbageType} · ${(r.address||'').substring(0,35)}${(r.address||'').length>35?'…':''}</div>
+              ${submittedAt ? `<div class="step-time">${submittedAt}</div>` : ''}
+              ${badgeHtml(s0, 'SUBMITTED')}
+            </div>
+          </div>
+
+          <!-- Step 1: Assigned -->
+          <div class="step ${s1}">
+            <div class="step-left">
+              ${circle(s1,'👷')}
+              <div class="step-line"></div>
+            </div>
+            <div class="step-right">
+              <div class="step-title">Worker Assigned</div>
+              <div class="step-desc">${r.worker ? r.worker.fullName + ' is on this request' : 'Awaiting field team assignment'}</div>
+              ${badgeHtml(s1, 'ASSIGNED')}
+            </div>
+          </div>
+
+          <!-- Step 2: In Progress -->
+          <div class="step ${s2}">
+            <div class="step-left">
+              ${circle(s2,'🚛')}
+              <div class="step-line"></div>
+            </div>
+            <div class="step-right">
+              <div class="step-title">Cleanup In Progress</div>
+              <div class="step-desc">${status === 'accepted' ? 'Field team is working on the area' : 'Worker heading to location'}</div>
+              ${badgeHtml(s2, 'IN PROGRESS')}
+            </div>
+          </div>
+
+          <!-- Step 3: Completed -->
+          <div class="step ${s3}">
+            <div class="step-left">
+              ${circle(s3,'🏁')}
+            </div>
+            <div class="step-right">
+              <div class="step-title">Area Cleaned</div>
+              <div class="step-desc">${status === 'completed' ? `You earned <strong style="color:var(--g)">+${r.pointsAwarded} pts</strong> for this report` : 'Cleanup confirmation pending'}</div>
+              ${completedAt ? `<div class="step-time">${completedAt}</div>` : ''}
+              ${badgeHtml(s3, 'COMPLETED')}
+            </div>
+          </div>
+        `;
+
+        // Also refresh the row pill in the list in case status changed
+        const row = document.getElementById('req-row-' + reportId);
+        if (row) {
+            const pill = row.querySelector('.req-status-pill');
+            const ico  = row.querySelector('.req-type-ico');
+            if (pill && ico) {
+                if (status === 'pending') {
+                    pill.className = 'req-status-pill pill-pending'; pill.textContent = 'PENDING';
+                    ico.textContent = '⏳'; ico.className = 'req-type-ico req-ico-pending';
+                } else if (status === 'accepted') {
+                    pill.className = 'req-status-pill pill-accepted'; pill.textContent = 'IN PROGRESS';
+                    ico.textContent = '🚛'; ico.className = 'req-type-ico req-ico-active';
+                } else {
+                    pill.className = 'req-status-pill pill-completed'; pill.textContent = 'COMPLETED';
+                    ico.textContent = '✅'; ico.className = 'req-type-ico req-ico-done';
+                }
+            }
+        }
+
+    } catch (err) {
+        console.error("Tracker render error:", err);
+    }
+}
+/* PROFILE PICTURE FUNCTIONALITY */
+async function setupProfilePopover() {
+  const topbarAvatar = document.getElementById('topbarAvatar');
+  const popover = document.getElementById('profilePopover');
+  const fileInput = document.getElementById('profilePictureInput');
+  const cameraOverlay = document.getElementById('cameraOverlay');
+  const sidebarAvatar = document.querySelector('.user-avatar');
+  const profileAvatarLarge = document.getElementById('popoverAvatar');
+
+  // Open popover on avatar click
+  topbarAvatar.addEventListener('click', (e) => {
+    e.stopPropagation();
+    popover.classList.toggle('show');
+  });
+
+  if (sidebarAvatar) {
+    sidebarAvatar.addEventListener('click', (e) => {
+      e.stopPropagation();
+      popover.classList.add('show');
+    });
+  }
+
+  // Trigger file input on camera icon or large avatar click
+  cameraOverlay.addEventListener('click', () => fileInput.click());
+  profileAvatarLarge.addEventListener('click', () => fileInput.click());
+
+  // Handle file selection
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const dataUrl = event.target.result;
+        // Save to backend
+        const userId = localStorage.getItem('userId');
+        await saveProfilePictureToDB(userId, dataUrl);
+        // Update all avatars
+        updateAllAvatars(dataUrl);
+        // Close popover
+        popover.classList.remove('show');
+        showToast('🎉', 'Profile Updated', 'Your picture has been changed successfully');
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Close popover on outside click
+  document.addEventListener('click', (e) => {
+    if (!popover.contains(e.target) && !topbarAvatar.contains(e.target) && ((!sidebarAvatar || !sidebarAvatar.contains(e.target)))) {
+      popover.classList.remove('show');
+    }
+  });
+}
+
+async function loadProfilePictureFromDB() {
+  try {
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      console.warn('No userId found for profile picture load');
+      return;
+    }
+    
+    console.log('Loading profile picture for user:', userId);
+    const response = await fetch(`http://127.0.0.1:5000/api/user/profile-picture/${userId}`);
+    const data = await response.json();
+    
+    if (data.success && data.profilePicture) {
+      console.log('✅ Profile picture loaded from DB - updating avatars');
+      updateAllAvatars(data.profilePicture);
+    } else {
+      console.log('No profile picture found in DB - keeping initial text');
+    }
+  } catch (err) {
+    console.error('❌ Failed to load profile picture from DB:', err);
+    console.log('Keeping initial avatar text as fallback');
+  }
+}
+
+async function saveProfilePictureToDB(userId, dataUrl) {
+  try {
+    console.log('Saving profile picture to DB for user:', userId);
+    const response = await fetch('http://127.0.0.1:5000/api/user/profile-picture', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, profilePicture: dataUrl })
+    });
+    const data = await response.json();
+    
+    if (data.success) {
+      console.log('✅ Profile picture saved to DB successfully');
+      return true;
+    } else {
+      console.error('❌ DB returned error:', data.message);
+      return false;
+    }
+  } catch (err) {
+    console.error('❌ Failed to save profile picture to DB:', err);
+    return false;
+  }
+}
+
+function updateAllAvatars(dataUrl) {
+  // For large avatars - replace with image containers
+  const avatars = [
+    document.querySelector('.user-avatar'),
+    document.getElementById('topbarAvatar'),
+    document.getElementById('popoverAvatar')
+  ];
+
+  avatars.forEach(avatar => {
+    if (avatar) {
+      // Create an image element inside the avatar
+      avatar.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;"/>`;
+    }
+  });
+}
+
+// ── SIDEBAR NAVIGATION ──
+function scrollToSection(id) {
+  const content = document.querySelector('.content');
+  if (id === 'top') { content.scrollTo({ top: 0, behavior: 'smooth' }); }
+  else {
+    const el = document.getElementById(id);
+    if (el) el.scrollIntoView({ behavior: 'smooth', block: 'start' });
+  }
+  // Update active state
+  document.querySelectorAll('.nav-item').forEach(b => b.classList.remove('active'));
+  const map = { 'top':'nav-dashboard','section-submit':'nav-submit','section-requests':'nav-requests','section-points':'nav-points','section-redeem':'nav-redeem' };
+  const navId = map[id];
+  if (navId) document.getElementById(navId)?.classList.add('active');
+}
+
+
+document.addEventListener('click', e => {
+  const panel = document.getElementById('notifPanel');
+  const overlay = document.getElementById('successOverlay');
+  if (overlay && overlay.classList.contains('open')) { return; }
+  if (panel && !panel.contains(e.target)) { panel.classList.remove('open'); }
+});
+</script>
+<script>
+/* ── Mobile sidebar init ── */
+(function mobileSidebar() {
+  function init() {
+    var hamburger = document.getElementById('hamburgerBtn');
+    var sidebar   = document.querySelector('.sidebar');
+    var overlay   = document.getElementById('sidebarOverlay');
+
+    if (!hamburger || !sidebar || !overlay) {
+      // Retry once after a short delay in case DOM isn't ready
+      setTimeout(init, 200);
+      return;
+    }
+
+    function open() {
+      sidebar.classList.add('drawer-open');
+      overlay.classList.add('visible');
+      hamburger.classList.add('is-open');
+      document.body.style.overflowY = 'hidden';
+    }
+    function close() {
+      sidebar.classList.remove('drawer-open');
+      overlay.classList.remove('visible');
+      hamburger.classList.remove('is-open');
+      document.body.style.overflowY = '';
+    }
+
+    hamburger.addEventListener('click', function(e) {
+      e.stopPropagation();
+      sidebar.classList.contains('drawer-open') ? close() : open();
+    });
+
+    overlay.addEventListener('click', close);
+
+    // Auto-close when a nav link is tapped on mobile
+    sidebar.querySelectorAll('.nav-item, .back-btn').forEach(function(el) {
+      el.addEventListener('click', function() {
+        if (window.matchMedia('(max-width:768px)').matches) close();
+      });
+    });
+  }
+
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', init);
+  } else {
+    init();
+  }
+})();
+</script>
+</body>
+</html>

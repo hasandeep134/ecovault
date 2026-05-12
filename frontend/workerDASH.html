@@ -1,0 +1,1374 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>EcoVault — Worker Dashboard</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet"/>
+<link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.css"/>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/leaflet/1.9.4/leaflet.min.js"></script>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --g:#00d97e;--g2:#00b864;--g3:#007a42;
+  --dark:#060d0a;--d2:#0a1610;--d3:#0f2018;--d4:#162b1e;
+  --text:#e2f0ea;--muted:#5a8a72;--dim:#3a6050;
+  --warn:#f0b429;--info:#38bdf8;--danger:#ef4444;--purple:#c084fc;
+  --acc2:#00e090;
+  --r:12px;--r2:18px;
+}
+html{scroll-behavior:smooth}
+body{font-family:'Outfit',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;overflow-x:hidden}
+
+/* BG */
+.bg-grid{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
+.bg-grid svg{width:100%;height:100%;opacity:0.06}
+.scan{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,217,126,0.25),transparent);animation:scan 12s linear infinite}
+@keyframes scan{0%{top:-1%}100%{top:101%}}
+
+/* TOP NAV */
+.topnav{
+  position:sticky;top:0;z-index:50;
+  display:flex;align-items:center;justify-content:space-between;
+  padding:0 20px;height:62px;
+  background:rgba(6,13,10,0.92);
+  border-bottom:1px solid rgba(0,217,126,0.12);
+  backdrop-filter:blur(20px);
+}
+.nav-brand{display:flex;align-items:center;gap:9px}
+.nav-ico{width:34px;height:34px;background:var(--g);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:17px}
+.nav-name{font-size:18px;font-weight:800;color:var(--text)}
+.nav-name span{color:var(--g)}
+.nav-right{display:flex;align-items:center;gap:10px}
+.worker-chip{
+  display:flex;align-items:center;gap:7px;
+  padding:6px 12px;background:rgba(240,180,41,0.08);
+  border:1px solid rgba(240,180,41,0.2);
+  border-radius:100px;font-size:12px;color:var(--warn);
+  font-family:'JetBrains Mono',monospace;
+}
+.w-dot{width:5px;height:5px;border-radius:50%;background:var(--g);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.avatar{
+  width:36px;height:36px;border-radius:50%;
+  background:linear-gradient(135deg,#004d2a,var(--g2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:14px;font-weight:800;color:#fff;
+  border:2px solid rgba(0,217,126,0.3);cursor:pointer;
+}
+
+/* PROFILE POPOVER */
+.profile-popover{
+  position:fixed;top:62px;right:20px;width:280px;
+  background:var(--d2);border:1px solid rgba(0,217,126,0.15);
+  border-radius:18px;z-index:99;display:none;
+  box-shadow:0 12px 48px rgba(0,0,0,0.6);
+  backdrop-filter:blur(20px);animation:popoverSlideDown 0.25s ease;
+}
+.profile-popover.show{display:block}
+@keyframes popoverSlideDown{from{opacity:0;transform:translateY(-8px)}to{opacity:1;transform:translateY(0)}}
+.profile-popover-content{padding:20px;display:flex;flex-direction:column;align-items:center}
+.profile-header{margin-bottom:16px}
+.profile-avatar-wrapper{
+  position:relative;width:80px;height:80px;margin:0 auto;
+}
+.profile-avatar-large{
+  width:80px;height:80px;border-radius:50%;
+  background:linear-gradient(135deg,#004d2a,var(--g2));
+  display:flex;align-items:center;justify-content:center;
+  font-size:32px;font-weight:900;color:#fff;
+  border:3px solid rgba(0,217,126,0.3);
+  cursor:pointer;transition:all 0.2s;
+}
+.profile-avatar-large:hover{border-color:rgba(0,217,126,0.6);transform:scale(1.05)}
+.profile-camera-overlay{
+  position:absolute;bottom:2px;right:2px;width:28px;height:28px;
+  border-radius:50%;background:var(--g);color:var(--dark);
+  display:flex;align-items:center;justify-content:center;font-size:14px;
+  font-weight:700;cursor:pointer;border:2px solid var(--d2);
+  transition:all 0.2s;box-shadow:0 4px 12px rgba(0,217,126,0.4);
+}
+.profile-camera-overlay:hover{transform:scale(1.15);box-shadow:0 6px 16px rgba(0,217,126,0.5)}
+.profile-name{
+  font-size:16px;font-weight:700;color:var(--text);text-align:center;margin-top:8px;
+}
+
+/* PAGE */
+.page{position:relative;z-index:2;padding:20px;max-width:1100px;margin:0 auto;display:flex;flex-direction:column;gap:20px}
+
+/* GREETING */
+.greeting-card{
+  background:linear-gradient(135deg,var(--d3) 0%,var(--d4) 100%);
+  border:1px solid rgba(0,217,126,0.15);
+  border-radius:var(--r2);padding:22px 24px;
+  display:flex;align-items:center;justify-content:space-between;
+  position:relative;overflow:hidden;
+}
+.greeting-card::before{
+  content:'';position:absolute;right:-40px;top:-40px;
+  width:180px;height:180px;border-radius:50%;
+  background:radial-gradient(circle,rgba(0,217,126,0.12) 0%,transparent 70%);
+}
+.greet-left h2{font-size:22px;font-weight:800;margin-bottom:4px}
+.greet-left h2 span{color:var(--g)}
+.greet-left p{font-size:13px;color:var(--muted)}
+.greet-right{display:flex;flex-direction:column;align-items:flex-end;gap:6px}
+.shift-badge{
+  padding:6px 14px;border-radius:8px;
+  background:rgba(0,217,126,0.1);
+  border:1px solid rgba(0,217,126,0.2);
+  font-size:12px;color:var(--g);font-weight:600;
+}
+.time-display{
+  font-family:'JetBrains Mono',monospace;
+  font-size:20px;font-weight:500;color:var(--text);
+}
+.date-display{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-align:right}
+
+/* STATUS TOGGLE */
+.status-row{
+  display:flex;align-items:center;justify-content:space-between;
+  background:var(--d3);border-radius:var(--r2);
+  padding:16px 20px;border:1px solid rgba(255,255,255,0.05);
+}
+.status-left{display:flex;align-items:center;gap:12px}
+.status-label{font-size:15px;font-weight:700}
+.status-sub{font-size:12px;color:var(--muted);margin-top:2px}
+.toggle-wrap{display:flex;align-items:center;gap:10px}
+.toggle-text{font-size:13px;color:var(--muted)}
+.toggle{
+  width:52px;height:28px;border-radius:100px;
+  background:rgba(255,255,255,0.08);border:1px solid rgba(255,255,255,0.1);
+  cursor:pointer;position:relative;transition:all 0.3s;
+}
+.toggle.on{background:var(--g);border-color:var(--g)}
+.toggle-thumb{
+  position:absolute;top:3px;left:3px;
+  width:20px;height:20px;border-radius:50%;
+  background:#fff;transition:left 0.3s;
+  box-shadow:0 2px 6px rgba(0,0,0,0.3);
+}
+.toggle.on .toggle-thumb{left:27px}
+
+/* QUICK STATS */
+.quick-stats{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+.qs-card{
+  background:var(--d3);border-radius:var(--r2);
+  padding:18px 18px 16px;
+  border:1px solid rgba(255,255,255,0.05);
+  text-align:center;position:relative;overflow:hidden;
+  transition:transform 0.2s,border-color 0.2s;cursor:default;
+}
+.qs-card:hover{transform:translateY(-2px);border-color:rgba(0,217,126,0.15)}
+.qs-card::after{content:'';position:absolute;top:0;left:0;right:0;height:2px;border-radius:2px 2px 0 0}
+.qs-card.g::after{background:linear-gradient(90deg,var(--g3),var(--g))}
+.qs-card.a::after{background:linear-gradient(90deg,#92400e,var(--warn))}
+.qs-card.b::after{background:linear-gradient(90deg,#0c4a6e,var(--info))}
+.qs-ico{font-size:24px;margin-bottom:8px}
+.qs-val{font-size:30px;font-weight:900;letter-spacing:-1px;line-height:1}
+.qs-val.g{color:var(--g)}
+.qs-val.a{color:var(--warn)}
+.qs-val.b{color:var(--info)}
+.qs-label{font-size:12px;color:var(--muted);margin-top:5px;font-weight:500}
+
+/* MAIN LAYOUT */
+.main-grid{display:grid;grid-template-columns:1fr 360px;gap:20px;align-items:start}
+
+/* MAP */
+.map-panel{
+  background:var(--d3);border-radius:var(--r2);
+  border:1px solid rgba(255,255,255,0.05);overflow:hidden;
+}
+.panel-hdr{
+  padding:14px 18px;border-bottom:1px solid rgba(0,217,126,0.08);
+  display:flex;align-items:center;justify-content:space-between;
+}
+.phdr-title{font-size:15px;font-weight:700;display:flex;align-items:center;gap:8px}
+.phdr-sub{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.map-wrap{position:relative;height:380px;background:#060f0a}
+#workerMap{width:100%;height:100%}
+
+/* Leaflet theme overrides */
+.leaflet-container{background:#060f0a!important;font-family:'Outfit',sans-serif}
+.leaflet-tile-pane{filter:brightness(0.8) saturate(0.85) hue-rotate(8deg)}
+.leaflet-control-zoom{border:1px solid rgba(0,217,126,0.2)!important;border-radius:9px!important;overflow:hidden;box-shadow:none!important}
+.leaflet-control-zoom a{
+  background:rgba(10,22,16,0.92)!important;color:var(--g)!important;
+  border-color:rgba(0,217,126,0.12)!important;width:30px!important;height:30px!important;
+  line-height:30px!important;font-size:16px!important;transition:background 0.2s;
+}
+.leaflet-control-zoom a:hover{background:rgba(0,217,126,0.15)!important}
+.leaflet-control-attribution{background:rgba(6,13,10,0.7)!important;color:var(--muted)!important;font-size:9px!important;border-top-left-radius:6px!important}
+.leaflet-control-attribution a{color:var(--g)!important}
+.leaflet-popup-content-wrapper{
+  background:rgba(10,22,16,0.97)!important;
+  border:1px solid rgba(0,217,126,0.22)!important;
+  border-radius:12px!important;color:var(--text)!important;
+  box-shadow:0 8px 32px rgba(0,0,0,0.6)!important;
+  backdrop-filter:blur(10px);
+}
+.leaflet-popup-tip{background:rgba(10,22,16,0.97)!important}
+.leaflet-popup-content{margin:12px 16px!important;font-size:13px;font-family:'Outfit',sans-serif;min-width:160px}
+.popup-type{font-size:14px;font-weight:700;color:var(--text);margin-bottom:4px}
+.popup-addr{font-size:11px;color:var(--muted);margin-bottom:8px;line-height:1.4}
+.popup-meta{display:flex;gap:6px;align-items:center;margin-bottom:10px;flex-wrap:wrap}
+.popup-sev{font-size:10px;font-weight:700;padding:2px 8px;border-radius:4px;font-family:'JetBrains Mono',monospace}
+.popup-dist{font-size:10px;color:var(--text);background:rgba(255,255,255,0.07);padding:2px 8px;border-radius:4px;font-family:'JetBrains Mono',monospace}
+.popup-accept{
+  width:100%;padding:8px;border-radius:8px;
+  background:var(--g);color:var(--dark);
+  border:none;font-family:'Outfit',sans-serif;
+  font-size:13px;font-weight:700;cursor:pointer;transition:background 0.2s;
+}
+.popup-accept:hover{background:var(--acc2)}
+
+/* map legend */
+.map-leg{display:flex;gap:14px;padding:10px 16px;border-top:1px solid rgba(0,217,126,0.06);flex-wrap:wrap}
+.leg{display:flex;align-items:center;gap:5px;font-size:11px;color:var(--muted)}
+.ld{width:8px;height:8px;border-radius:50%}
+
+/* NEARBY LIST */
+.nearby-panel{
+  background:var(--d3);border-radius:var(--r2);
+  border:1px solid rgba(255,255,255,0.05);overflow:hidden;
+  display:flex;flex-direction:column;
+}
+.nby-list{overflow-y:auto;max-height:380px}
+.nby-item{
+  padding:14px 16px;border-bottom:1px solid rgba(255,255,255,0.04);
+  display:flex;gap:12px;cursor:pointer;
+  transition:background 0.2s;position:relative;
+}
+.nby-item:hover{background:rgba(0,217,126,0.04)}
+.nby-item:last-child{border-bottom:none}
+.nby-item.highlighted{background:rgba(0,217,126,0.06);border-left:3px solid var(--g)}
+.severity-ico{
+  width:40px;height:40px;border-radius:10px;flex-shrink:0;
+  display:flex;align-items:center;justify-content:center;font-size:18px;
+}
+.s-high{background:rgba(239,68,68,0.12);border:1px solid rgba(239,68,68,0.2)}
+.s-medium{background:rgba(240,180,41,0.1);border:1px solid rgba(240,180,41,0.2)}
+.s-low{background:rgba(0,217,126,0.1);border:1px solid rgba(0,217,126,0.2)}
+.nby-info{flex:1;min-width:0}
+.nby-title{font-size:13px;font-weight:700;color:var(--text);margin-bottom:3px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nby-addr{font-size:11px;color:var(--muted);margin-bottom:5px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.nby-meta{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
+.sev-tag{font-size:10px;font-weight:700;padding:2px 7px;border-radius:4px;font-family:'JetBrains Mono',monospace}
+.sev-h{background:rgba(239,68,68,0.1);color:#ef4444}
+.sev-m{background:rgba(240,180,41,0.1);color:var(--warn)}
+.sev-l{background:rgba(0,217,126,0.1);color:var(--g)}
+.accept-btn{
+  align-self:center;flex-shrink:0;
+  padding:8px 14px;border-radius:8px;
+  background:var(--g);color:var(--dark);
+  border:none;font-family:'Outfit',sans-serif;
+  font-size:12px;font-weight:700;cursor:pointer;
+  transition:all 0.2s;
+}
+.accept-btn:hover{background:var(--acc2);transform:scale(1.05)}
+.accept-btn:disabled{background:rgba(255,255,255,0.06);color:var(--dim);cursor:not-allowed;transform:none}
+.done-badge{
+  align-self:center;flex-shrink:0;
+  padding:6px 12px;border-radius:8px;
+  background:rgba(0,217,126,0.1);border:1px solid rgba(0,217,126,0.2);
+  font-size:11px;color:var(--g);font-weight:600;
+}
+
+/* ACTIVE JOB BANNER */
+.active-job{
+  background:var(--d4);border:1px solid rgba(0,217,126,0.25);
+  border-radius:var(--r2);padding:18px 20px;
+  display:none;animation:fadeUp 0.4s ease both;
+}
+.active-job.show{display:block}
+@keyframes fadeUp{from{opacity:0;transform:translateY(12px)}to{opacity:1;transform:translateY(0)}}
+.aj-header{display:flex;align-items:center;justify-content:space-between;margin-bottom:14px}
+.aj-title{font-size:16px;font-weight:800;display:flex;align-items:center;gap:8px}
+.aj-badge{
+  padding:5px 12px;border-radius:6px;font-size:11px;font-weight:700;
+  background:rgba(240,180,41,0.1);border:1px solid rgba(240,180,41,0.2);
+  color:var(--warn);font-family:'JetBrains Mono',monospace;
+  display:flex;align-items:center;gap:5px;
+}
+.pulse-dot{width:6px;height:6px;border-radius:50%;background:var(--warn);animation:blink 1s infinite}
+.aj-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:16px}
+.aj-field{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.06);border-radius:9px;padding:10px 12px}
+.aj-field-label{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;text-transform:uppercase;letter-spacing:1px;margin-bottom:4px}
+.aj-field-val{font-size:14px;font-weight:700;color:var(--text)}
+.aj-actions{display:flex;gap:10px}
+.btn-nav{
+  flex:1;padding:13px;border-radius:10px;
+  background:var(--g);color:var(--dark);
+  border:none;font-family:'Outfit',sans-serif;
+  font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s;
+}
+.btn-nav:hover{background:var(--acc2);transform:translateY(-1px)}
+.btn-done{
+  flex:1;padding:13px;border-radius:10px;
+  background:rgba(255,255,255,0.05);color:var(--text);
+  border:1px solid rgba(255,255,255,0.1);
+  font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s;
+}
+.btn-done:hover{background:rgba(0,217,126,0.08);border-color:rgba(0,217,126,0.3);color:var(--g)}
+
+/* EARNINGS */
+.earnings-panel{
+  background:var(--d3);border-radius:var(--r2);
+  border:1px solid rgba(255,255,255,0.05);overflow:hidden;
+}
+.earn-top{padding:18px 20px 12px;border-bottom:1px solid rgba(0,217,126,0.07)}
+.earn-big{font-size:44px;font-weight:900;color:var(--g);letter-spacing:-2px;line-height:1}
+.earn-sub{font-size:12px;color:var(--muted);margin-top:4px}
+.earn-tabs{display:flex;background:rgba(255,255,255,0.03);border-radius:8px;padding:3px;margin:12px 20px 0}
+.etab{
+  flex:1;padding:7px;border:none;border-radius:6px;
+  font-family:'Outfit',sans-serif;font-size:12px;font-weight:600;
+  color:var(--muted);background:transparent;cursor:pointer;transition:all 0.2s;
+}
+.etab.active{background:var(--g3);color:var(--text)}
+.earn-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;padding:14px 20px}
+.eg-card{background:rgba(255,255,255,0.03);border-radius:9px;padding:12px;border:1px solid rgba(255,255,255,0.05);text-align:center}
+.eg-val{font-size:20px;font-weight:800;color:var(--g)}
+.eg-label{font-size:10px;color:var(--muted);margin-top:3px}
+.earn-list{padding:0 20px 16px}
+.earn-row{
+  display:flex;align-items:center;justify-content:space-between;
+  padding:10px 0;border-bottom:1px solid rgba(255,255,255,0.04);
+}
+.earn-row:last-child{border-bottom:none}
+.earn-row-left{display:flex;align-items:center;gap:10px}
+.earn-ico{width:32px;height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:14px;background:rgba(0,217,126,0.1)}
+.earn-desc{font-size:13px;font-weight:500;color:var(--text)}
+.earn-date{font-size:10px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:1px}
+.earn-amt{font-size:14px;font-weight:700;color:var(--g)}
+
+/* WITHDRAW BUTTON */
+.btn-withdraw{
+  padding:9px 18px;border-radius:10px;
+  background:linear-gradient(135deg,var(--g3),var(--g2));
+  color:#fff;border:none;font-family:'Outfit',sans-serif;
+  font-size:13px;font-weight:700;cursor:pointer;
+  transition:all 0.2s;display:flex;align-items:center;gap:6px;
+}
+.btn-withdraw:hover{transform:translateY(-2px);}
+
+/* TOAST */
+.toast{
+  position:fixed;bottom:10px;left:50%;transform:translateX(-50%) translateY(80px);
+  background:var(--d2);border:1px solid rgba(0,217,126,0.3);
+  border-radius:var(--r2);padding:14px 20px;
+  display:flex;align-items:center;gap:12px;
+  box-shadow:0 12px 40px rgba(0,0,0,0.5);
+  transition:transform 0.4s cubic-bezier(0.34,1.56,0.64,1);
+  z-index:200;min-width:280px;
+}
+.toast.show{transform:translateX(-50%) translateY(0)}
+.toast-ico{font-size:22px}
+.toast-title{font-size:14px;font-weight:700}
+.toast-msg{font-size:11px;color:var(--muted);margin-top:2px}
+
+/* CONFIRM MODAL */
+.overlay{position:fixed;inset:0;z-index:150;background:rgba(0,0,0,0.75);backdrop-filter:blur(8px);display:none;align-items:center;justify-content:center;padding:20px}
+.overlay.open{display:flex;animation:fIn 0.2s ease}
+@keyframes fIn{from{opacity:0}to{opacity:1}}
+.modal{background:var(--d2);border:1px solid rgba(0,217,126,0.2);border-radius:22px;width:100%;max-width:380px;overflow:hidden;animation:mIn 0.3s cubic-bezier(0.34,1.56,0.64,1) both}
+@keyframes mIn{from{transform:scale(0.85) translateY(20px);opacity:0}to{transform:scale(1) translateY(0);opacity:1}}
+.modal-bar{height:3px;background:linear-gradient(90deg,var(--g3),var(--g),#00ffaa)}
+.modal-body{padding:26px}
+.modal-ico{font-size:36px;margin-bottom:12px}
+.modal-title{font-size:20px;font-weight:800;margin-bottom:6px}
+.modal-sub{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px}
+.modal-job-detail{background:rgba(255,255,255,0.03);border:1px solid rgba(255,255,255,0.07);border-radius:10px;padding:14px;margin-bottom:20px;font-size:13px;line-height:1.9;color:var(--muted)}
+.modal-job-detail strong{color:var(--text)}
+.modal-btns{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+.m-btn-yes{padding:12px;border-radius:9px;background:var(--g);color:var(--dark);border:none;font-family:'Outfit',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all 0.2s}
+.m-btn-yes:hover{background:var(--acc2)}
+.m-btn-no{padding:12px;border-radius:9px;background:rgba(255,255,255,0.05);color:var(--muted);border:1px solid rgba(255,255,255,0.1);font-family:'Outfit',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.m-btn-no:hover{border-color:rgba(239,68,68,0.3);color:var(--danger)}
+
+/* DONE MODAL */
+.done-modal-ico{font-size:48px;text-align:center;margin-bottom:12px}
+.earn-reward{display:flex;align-items:center;gap:14px;padding:14px;background:rgba(0,217,126,0.08);border:1px solid rgba(0,217,126,0.2);border-radius:10px;margin-bottom:18px}
+.er-big{font-size:26px;font-weight:900;color:var(--g)}
+.er-lbl{font-size:12px;color:var(--muted)}
+
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:rgba(0,217,126,0.2);border-radius:4px}
+
+@media(max-width:900px){
+  .main-grid{grid-template-columns:1fr}
+  .quick-stats{grid-template-columns:1fr 1fr}
+  .aj-grid{grid-template-columns:1fr 1fr}
+}
+@media(max-width:600px){
+  .quick-stats{grid-template-columns:1fr 1fr}
+  .earn-grid{grid-template-columns:1fr 1fr}
+  .aj-grid{grid-template-columns:1fr}
+  .greeting-card{flex-direction:column;gap:14px;align-items:flex-start}
+}
+</style>
+</head>
+<body>
+
+<!-- BG -->
+<div class="bg-grid">
+  <svg viewBox="0 0 1440 900" xmlns="http://www.w3.org/2000/svg">
+    <defs>
+      <pattern id="g1" width="60" height="60" patternUnits="userSpaceOnUse"><path d="M60 0L0 0 0 60" fill="none" stroke="rgba(0,217,126,0.2)" stroke-width="0.5"/></pattern>
+      <pattern id="g2" width="300" height="300" patternUnits="userSpaceOnUse"><path d="M300 0L0 0 0 300" fill="none" stroke="rgba(0,217,126,0.35)" stroke-width="1"/></pattern>
+    </defs>
+    <rect width="100%" height="100%" fill="url(#g1)"/>
+    <rect width="100%" height="100%" fill="url(#g2)"/>
+  </svg>
+  <div class="scan"></div>
+</div>
+
+<!-- TOP NAV -->
+<nav class="topnav">
+  <div class="nav-brand">
+    <div class="nav-ico">♻</div>
+    <div class="nav-name">Eco<span>Vault</span></div>
+  </div>
+  <div class="nav-right">
+    <button onclick="logout()" style="
+    background: rgba(239, 68, 68, 0.1); 
+    color: #ef4444; 
+    border: 1px solid rgba(239, 68, 68, 0.2);
+    padding: 6px 12px;
+    border-radius: 8px;
+    font-size: 12px;
+    font-weight: 600;
+    cursor: pointer;
+    margin-right: 8px;
+    font-family: 'Outfit', sans-serif;">
+    Log Out
+  </button>
+    <div class="avatar" id="navAvatar">—</div>
+  </div>
+</nav>
+
+<!-- PROFILE POPOVER -->
+<div class="profile-popover" id="profilePopover">
+  <div class="profile-popover-content">
+    <div class="profile-header">
+      <div class="profile-avatar-wrapper">
+        <div class="profile-avatar-large" id="popoverAvatar">?</div>
+        <div class="profile-camera-overlay" id="cameraOverlay">📷</div>
+      </div>
+    </div>
+    <div class="profile-name" id="popoverName">—</div>
+    <div style="font-size:11px;color:var(--muted);margin-top:8px;font-family:'JetBrains Mono',monospace;text-align:center">Click camera icon to change picture</div>
+    <input type="file" id="profilePictureInput" accept="image/*" style="display:none">
+  </div>
+</div>
+
+<!-- PAGE -->
+<div class="page">
+
+  <!-- GREETING -->
+  <div class="greeting-card">
+    <div class="greet-left">
+      <h2>Namaste, <span id="workerName">—</span> 👷</h2>
+      <p>Worker ID: <span id="workerId">—</span> &nbsp;·&nbsp; <span id="workerZone">—</span></p>
+    </div>
+    <div class="greet-right">
+      <div class="shift-badge" id="shiftBadge">🟢 Shift Active</div>
+      <div class="time-display" id="clock">--:--:--</div>
+      <div class="date-display" id="datedisp">Loading...</div>
+    </div>
+  </div>
+
+  <!-- AVAILABILITY TOGGLE -->
+  <div class="status-row">
+    <div class="status-left">
+      <div style="font-size:28px">🚛</div>
+      <div>
+        <div class="status-label" id="availLabel">I am Available</div>
+        <div class="status-sub" id="availSub">Toggle off if you are busy or on break</div>
+      </div>
+    </div>
+    <div class="toggle-wrap">
+      <div class="toggle-text" id="toggleTxt">Available</div>
+      <div class="toggle on" id="availToggle" onclick="toggleAvail()">
+        <div class="toggle-thumb"></div>
+      </div>
+    </div>
+  </div>
+
+  <!-- QUICK STATS -->
+  <div class="quick-stats">
+    <div class="qs-card g">
+      <div class="qs-ico">✅</div>
+      <div class="qs-val g" id="doneCount">0</div>
+      <div class="qs-label">Jobs Done Today</div>
+    </div>
+    <div class="qs-card a">
+      <div class="qs-ico">⏳</div>
+      <div class="qs-val a" id="pendingCount">—</div>
+      <div class="qs-label">Nearby Pending</div>
+    </div>
+  </div>
+
+  <!-- ACTIVE JOB BANNER (hidden until accepted) -->
+  <div class="active-job" id="activeJobBanner">
+    <div class="aj-header">
+      <div class="aj-title">🚛 Active Job</div>
+      <div class="aj-badge"><span class="pulse-dot"></span>IN PROGRESS</div>
+    </div>
+    <div class="aj-grid">
+      <div class="aj-field">
+        <div class="aj-field-label">Type</div>
+        <div class="aj-field-val" id="ajType">—</div>
+      </div>
+      <div class="aj-field">
+        <div class="aj-field-label">Severity</div>
+        <div class="aj-field-val" id="ajSev">—</div>
+      </div>
+    </div>
+    <div class="aj-field" style="margin-bottom:14px">
+      <div class="aj-field-label">Address</div>
+      <div class="aj-field-val" id="ajAddr" style="font-size:13px">—</div>
+    </div>
+    <div class="aj-actions">
+      <button class="btn-nav" onclick="openNav()">🗺️ Navigate</button>
+      <button class="btn-done" onclick="openDoneModal()">✅ Mark Complete</button>
+    </div>
+  </div>
+
+  <!-- MAIN GRID: MAP + NEARBY -->
+  <div class="main-grid">
+
+    <!-- MAP -->
+    <div class="map-panel">
+      <div class="panel-hdr">
+        <div class="phdr-title">🗺️ Nearby Requests Map</div>
+        <div class="phdr-sub">TAP PIN TO ACCEPT</div>
+      </div>
+      <div class="map-wrap">
+        <div id="workerMap"></div>
+      </div>
+
+      <div class="map-leg">
+        <div class="leg"><div class="ld" style="background:var(--danger)"></div>High</div>
+        <div class="leg"><div class="ld" style="background:var(--warn)"></div>Medium</div>
+        <div class="leg"><div class="ld" style="background:var(--g)"></div>Low</div>
+      </div>
+    </div>
+
+    <!-- NEARBY LIST -->
+    <div class="nearby-panel">
+      <div class="panel-hdr">
+        <div class="phdr-title">📋 Pending Requests</div>
+        <div class="phdr-sub" id="nearbyCount">0 NEARBY</div>
+      </div>
+      <div class="nby-list" id="nbyList">
+        <!-- rendered by JS -->
+      </div>
+    </div>
+
+  </div>
+
+    <div class="earnings-panel">
+    <div class="panel-hdr">
+      <div class="phdr-title">💰 My Earnings</div>
+      <div class="phdr-sub" id="earningsMonth">ALL TIME</div>
+    </div>
+    <div class="earn-top" style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px">
+      <div>
+        <div class="earn-big" id="earnBig">₹0</div>
+        <div class="earn-sub" id="earnSub">Total earnings</div>
+      </div>
+      <button class="btn-withdraw" onclick="window.location.href='Withdraw.html'">💸 Withdraw</button>
+    </div>
+    <div class="earn-tabs">
+      <button class="etab active" onclick="switchEarnTab(this,'month')">Total</button>
+      <button class="etab" onclick="switchEarnTab(this,'week')">This Week</button>
+      <button class="etab" onclick="switchEarnTab(this,'today')">Today</button>
+    </div>
+    <div class="earn-grid">
+      <div class="eg-card">
+        <div class="eg-val" id="egJobs">0</div>
+        <div class="eg-label">Jobs Completed</div>
+      </div>
+      <div class="eg-card">
+        <div class="eg-val" id="egPer">₹0</div>
+        <div class="eg-label">Per Job Avg.</div>
+      </div>
+    </div>
+
+  </div>
+
+</div>
+
+<!-- ACCEPT MODAL -->
+<div class="overlay" id="acceptOverlay">
+  <div class="modal">
+    <div class="modal-bar"></div>
+    <div class="modal-body">
+      <div class="modal-ico">📋</div>
+      <div class="modal-title">Accept this job?</div>
+      <div class="modal-sub">You will be assigned to clean this area. Make sure you are ready and have your equipment.</div>
+      <div class="modal-job-detail" id="modalJobDetail">Loading...</div>
+      <div class="modal-btns">
+        <button class="m-btn-no" onclick="closeAccept()">❌ Not Now</button>
+        <button class="m-btn-yes" onclick="confirmAccept()">✅ Accept Job</button>
+      </div>
+    </div>
+  </div>
+</div>
+
+<!-- DONE MODAL -->
+<div class="overlay" id="doneOverlay">
+  <div class="modal">
+    <div class="modal-bar"></div>
+    <div class="modal-body">
+      <div class="done-modal-ico">🎉</div>
+      <div class="modal-title">Job Completed!</div>
+      <div class="modal-sub">Great work! The area has been marked clean. Your earnings have been updated.</div>
+      <div class="earn-reward">
+        <div style="font-size:32px">💰</div>
+        <div>
+          <div class="er-big" id="doneEarning">+₹50</div>
+          <div class="er-lbl">Added to your earnings</div>
+        </div>
+      </div>
+      <button class="m-btn-yes" style="width:100%;padding:13px" onclick="confirmDone()">👍 Great, Back to Dashboard</button>
+    </div>
+  </div>
+</div>
+
+<!-- TOAST -->
+<div class="toast" id="toast">
+  <div class="toast-ico" id="toastIco">✅</div>
+  <div>
+    <div class="toast-title" id="toastTitle">Done!</div>
+    <div class="toast-msg" id="toastMsg">Operation successful</div>
+  </div>
+</div>
+
+<script>
+// Auth Guard: Only workers can access this page
+(function() {
+  const role = localStorage.getItem('userRole');
+  if (role !== 'worker') {
+    window.location.href = 'welcome_page-dynamic.html';
+  }
+})();
+
+// ── DATA — populate these from your backend ──
+// Each report object must have: { id, type, addr, dist, sev, sevKey, pts, earn, lat, lng }
+// sevKey: 'h' = High, 'm' = Medium, 'l' = Low
+let reports = [];         // populated by your API call
+let reportLatLngs = [];   // [ [lat, lng], ... ] — parallel array to reports
+
+const pinColors = { h:'#ef4444', m:'#f0b429', l:'#00d97e' };
+const sevIcons  = { h:'🔴', m:'🟠', l:'🟢' };
+const sevClass  = { h:'s-high', m:'s-medium', l:'s-low' };
+const sevTagCls = { h:'sev-h', m:'sev-m', l:'sev-l' };
+
+const API_BASE = 'http://127.0.0.1:5000';
+const DEFAULT_FETCH_TIMEOUT_MS = 10000;
+let currentActiveJob = null;
+let doneCount = 0;
+let totalEarn = 0;     
+let pendingSet = new Set();
+
+async function fetchJsonWithTimeout(url, options = {}, timeoutMs = DEFAULT_FETCH_TIMEOUT_MS) {
+  const controller = new AbortController();
+  const timeoutId = setTimeout(() => controller.abort(), timeoutMs);
+
+  try {
+    const response = await fetch(url, {
+      ...options,
+      signal: controller.signal
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP ${response.status}`);
+    }
+
+    return await response.json();
+  } finally {
+    clearTimeout(timeoutId);
+  }
+}
+
+// ── CLOCK ──
+function tick(){
+  const now = new Date();
+  document.getElementById('clock').textContent = now.toLocaleTimeString('en-IN');
+  document.getElementById('datedisp').textContent = now.toLocaleDateString('en-IN',{weekday:'long',day:'numeric',month:'long',year:'numeric'});
+}
+tick(); setInterval(tick,1000);
+
+// ── LEAFLET MAP ──
+const BATHINDA = [30.2110, 74.9455];
+let workerMap, leafletMarkers = {};
+
+
+
+function makePinIcon(color, emoji) {
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      display:flex;flex-direction:column;align-items:center;filter:drop-shadow(0 4px 8px rgba(0,0,0,0.5))">
+      <div style="
+        width:32px;height:32px;border-radius:50% 50% 50% 0;
+        background:${color};transform:rotate(-45deg);
+        display:flex;align-items:center;justify-content:center;
+        border:2px solid rgba(255,255,255,0.25);">
+        <span style="transform:rotate(45deg);font-size:14px">${emoji}</span>
+      </div>
+      <div style="width:2px;height:8px;background:rgba(255,255,255,0.3)"></div>
+    </div>`,
+    iconSize: [32, 42],
+    iconAnchor: [16, 42],
+    popupAnchor: [0, -44]
+  });
+}
+
+function makeWorkerIcon() {
+  return L.divIcon({
+    className: '',
+    html: `<div style="
+      width:18px;height:18px;border-radius:50%;
+      background:#38bdf8;border:3px solid #fff;
+      box-shadow:0 0 0 6px rgba(56,189,248,0.2),0 0 14px rgba(56,189,248,0.5)">
+    </div>`,
+    iconSize: [18, 18],
+    iconAnchor: [9, 9]
+  });
+}
+
+function initWorkerMap() {
+  // Center exactly on Bathinda
+  workerMap = L.map('workerMap').setView([30.2110, 74.9455], 13);
+
+  L.tileLayer('https://{s}.tile.openstreetmap.org/{z}/{x}/{y}.png', {
+    attribution: '© OpenStreetMap contributors'
+  }).addTo(workerMap);
+}
+
+// ── RENDER PINS ──
+function renderPins() {
+  // Remove old markers
+  Object.values(leafletMarkers).forEach(m => workerMap.removeLayer(m));
+  leafletMarkers = {};
+
+  reports.forEach((r, i) => {
+    if (!pendingSet.has(i)) return;
+    const col = pinColors[r.sevKey];
+    const ico = sevIcons[r.sevKey];
+    const ll  = reportLatLngs[i];
+
+    const sevColors = { h:'rgba(239,68,68,0.12)',  m:'rgba(240,180,41,0.12)', l:'rgba(0,217,126,0.1)' };
+    const sevBorder = { h:'rgba(239,68,68,0.3)',   m:'rgba(240,180,41,0.3)',  l:'rgba(0,217,126,0.3)' };
+    const sevText   = { h:'#ef4444', m:'#f0b429', l:'#00d97e' };
+
+    const marker = L.marker(ll, { icon: makePinIcon(col, ico) }).addTo(workerMap);
+    marker.bindPopup(`
+      <div class="popup-type">${r.type}</div>
+      <div class="popup-addr">📍 ${r.addr}</div>
+      <div class="popup-meta">
+        <span class="popup-sev" style="background:${sevColors[r.sevKey]};border:1px solid ${sevBorder[r.sevKey]};color:${sevText[r.sevKey]}">${r.sev}</span>
+        <span class="popup-dist">+₹${r.earn}</span>
+      </div>
+      <button class="popup-accept" onclick="openAccept(${i});workerMap.closePopup()">✅ Accept Job</button>
+    `, { className: '', minWidth: 190 });
+
+    leafletMarkers[i] = marker;
+  });
+}
+
+// ── RENDER NEARBY LIST ──
+function renderList(){
+  const list = document.getElementById('nbyList');
+  list.innerHTML = '';
+  if(pendingSet.size === 0){
+    list.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted);font-size:13px">🎉 All nearby requests cleared!<br><span style="font-size:11px">Check back later.</span></div>';
+    return;
+  }
+  reports.forEach((r,i)=>{
+    if(!pendingSet.has(i)) return;
+    const div = document.createElement('div');
+    div.className = 'nby-item';
+    div.id = `item-${i}`;
+    div.innerHTML = `
+      <div class="severity-ico ${sevClass[r.sevKey]}">${sevIcons[r.sevKey]}</div>
+      <div class="nby-info">
+        <div class="nby-title">${r.type}</div>
+        <div class="nby-addr">📍 ${r.addr}</div>
+        <div class="nby-meta">
+          <span class="sev-tag ${sevTagCls[r.sevKey]}">${r.sev}</span>
+          <span style="font-size:10px;color:var(--muted)">+₹${r.earn}</span>
+        </div>
+      </div>
+      <button class="accept-btn" onclick="openAccept(${i})">Accept</button>`;
+    list.appendChild(div);
+  });
+}
+
+// ── ACCEPT FLOW ──
+let pendingAcceptIdx = null;
+function openAccept(i){
+  if(!isAvail){ showToast('🔴','You are set to Busy','Toggle yourself to Available before accepting new jobs.'); return; }
+  if(currentActiveJob !== null){ showToast('⚠️','You already have an active job!','Complete it first before accepting another.'); return; }
+  pendingAcceptIdx = i;
+  const r = reports[i];
+  document.getElementById('modalJobDetail').innerHTML =
+    `<strong>Type:</strong> ${r.type}<br>
+     <strong>Address:</strong> ${r.addr}<br>
+     <strong>Severity:</strong> ${r.sev}<br>
+     <strong>Earnings:</strong> ₹${r.earn}`;
+  document.getElementById('acceptOverlay').classList.add('open');
+}
+function closeAccept(){ document.getElementById('acceptOverlay').classList.remove('open'); }
+async function confirmAccept(){
+  const i = pendingAcceptIdx;
+  const r = reports[i];
+  const workerId = localStorage.getItem('userId');
+
+  if (!workerId) {
+    showToast('⚠️', 'Missing worker ID', 'Please sign in again before accepting a job.');
+    return;
+  }
+
+  try {
+    const data = await fetchJsonWithTimeout(`${API_BASE}/api/reports/accept/${r.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ workerId })
+    });
+
+    if (!data.success) {
+      showToast('⚠️', 'Could not accept job', data.message || 'Try again.');
+      return;
+    }
+
+    currentActiveJob = r;
+    pendingSet.delete(i);
+
+    // Pan map to the job location
+    if(workerMap && reportLatLngs[i]) {
+      workerMap.setView(reportLatLngs[i], 15, { animate: true });
+    }
+
+    // show active banner
+    document.getElementById('ajType').textContent  = r.type;
+    document.getElementById('ajSev').textContent   = r.sev;
+    document.getElementById('ajAddr').textContent  = r.addr;
+    document.getElementById('activeJobBanner').classList.add('show');
+
+    closeAccept();
+    renderPins();
+    renderList();
+    showToast('🚛','Job Accepted!','Navigate to the location and start cleaning.');
+  } catch (err) {
+    showToast('❌', 'Accept failed', 'Could not reach the server.');
+  }
+}
+
+// ── DONE FLOW ──
+function openDoneModal(){
+  if(currentActiveJob === null) return;
+  const r = currentActiveJob;
+  document.getElementById('doneEarning').textContent = `+₹${r.earn}`;
+  document.getElementById('doneOverlay').classList.add('open');
+}
+async function confirmDone(){
+  const r = currentActiveJob;
+  const workerId = localStorage.getItem('userId');
+
+  if (!r || !workerId) {
+    showToast('⚠️', 'Cannot complete job', 'No active job is loaded.');
+    return;
+  }
+
+  try {
+    const data = await fetchJsonWithTimeout(`${API_BASE}/api/reports/complete/${r.id}`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ workerId })
+    });
+
+    if (!data.success) {
+      showToast('⚠️', 'Could not complete job', data.message || 'Try again.');
+      return;
+    }
+
+    document.getElementById('doneOverlay').classList.remove('open');
+    currentActiveJob = null;
+    if(workerMap) workerMap.setView(BATHINDA, 14, { animate: true });
+
+    await loadWorkerDashboardData();
+    await fetchTasks();
+
+    showToast('🎉','Area Cleaned!',`₹${data.earnings} added to your earnings.`);
+  } catch (err) {
+    showToast('❌', 'Completion failed', 'Could not reach the server.');
+  }
+}
+
+// ── NAV ──
+function openNav(){
+  if(currentActiveJob===null) return;
+  const ll = [currentActiveJob.lat, currentActiveJob.lng];
+  const url = `https://www.google.com/maps/dir/?api=1&destination=${ll[0]},${ll[1]}`;
+  window.open(url, '_blank');
+}
+
+// ── AVAILABILITY TOGGLE ──
+let isAvail = true;
+
+// Apply availability state to all UI elements (shared by toggle and load)
+function applyAvailState(available) {
+  isAvail = available;
+  const tog = document.getElementById('availToggle');
+  tog.classList.toggle('on', isAvail);
+  document.getElementById('toggleTxt').textContent  = isAvail ? 'Available' : 'Busy';
+  document.getElementById('availLabel').textContent = isAvail ? 'I am Available' : 'I am Busy';
+  document.getElementById('availSub').textContent   = isAvail ? 'Toggle off if you are busy or on break' : 'Toggle on when you are ready for jobs';
+  const badge = document.getElementById('shiftBadge');
+  if (isAvail) {
+    badge.textContent = '🟢 Shift Active';
+    badge.style.background = 'rgba(0,217,126,0.1)';
+    badge.style.border = '1px solid rgba(0,217,126,0.2)';
+    badge.style.color = 'var(--g)';
+  } else {
+    badge.textContent = '🔴 Busy';
+    badge.style.background = 'rgba(239,68,68,0.1)';
+    badge.style.border = '1px solid rgba(239,68,68,0.2)';
+    badge.style.color = 'var(--danger)';
+  }
+}
+
+async function toggleAvail(){
+  const newState = !isAvail;
+  const userId = localStorage.getItem('userId');
+
+  // Optimistically update UI immediately
+  applyAvailState(newState);
+  showToast(newState ? '🟢' : '🔴', newState ? 'You are Available' : 'You are Busy', newState ? 'You will receive new job requests.' : 'New requests are paused for now.');
+
+  // Persist to DB
+  if (userId) {
+    try {
+      const data = await fetchJsonWithTimeout(`${API_BASE}/api/worker/${userId}/availability`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ isBusy: !newState })
+      });
+      if (!data.success) {
+        // Revert on failure
+        applyAvailState(!newState);
+        showToast('⚠️', 'Could not save status', 'Please try again.');
+      }
+    } catch (err) {
+      // Revert on network error
+      applyAvailState(!newState);
+      showToast('⚠️', 'Could not save status', 'Check your connection and try again.');
+    }
+  }
+}
+
+// ── EARNINGS TABS ──
+// Populate earnData from your backend before calling switchEarnTab
+const earnData = {
+  month: { big:'₹0', jobs:0, per:'₹0', bonus:'₹0' },
+  week:  { big:'₹0', jobs:0, per:'₹0', bonus:'₹0' },
+  today: { big:'₹0', jobs:0, per:'₹0', bonus:'₹0' },
+};
+
+
+function switchEarnTab(btn, key){
+  document.querySelectorAll('.etab').forEach(b=>b.classList.remove('active'));
+  btn.classList.add('active');
+  const d = earnData[key];
+  // Removed the line that overwrites the big number
+  document.getElementById('egJobs').textContent  = d.jobs;
+  document.getElementById('egPer').textContent   = d.per;
+}
+
+// ── TOAST ──
+function showToast(ico, title, msg){
+  const t = document.getElementById('toast');
+  document.getElementById('toastIco').textContent   = ico;
+  document.getElementById('toastTitle').textContent = title;
+  document.getElementById('toastMsg').textContent   = msg;
+  t.classList.add('show');
+  setTimeout(()=>t.classList.remove('show'), 3500);
+}
+
+// ── CLOSE OVERLAYS ON BG CLICK ──
+document.getElementById('acceptOverlay').addEventListener('click',function(e){ if(e.target===this) closeAccept(); });
+document.getElementById('doneOverlay').addEventListener('click',function(e){ if(e.target===this) document.getElementById('doneOverlay').classList.remove('open'); });
+
+// ── INIT ──
+// 1. On Page Load, Sync Identity and Tasks
+window.addEventListener('load', async () => {
+    // Set UI names from localStorage
+    const name = localStorage.getItem('userName') || 'Worker';
+    const initial = name.charAt(0).toUpperCase();
+    document.getElementById('workerName').textContent = name;
+    document.getElementById('navAvatar').textContent = initial;
+    document.getElementById('popoverName').textContent = name;
+    document.getElementById('popoverAvatar').textContent = initial;
+    
+    // Initialize the Map centered on Bathinda
+    initWorkerMap();
+
+    // Setup profile popover
+    setupProfilePopover();
+
+    // Load summary and tasks in parallel so one slow call never blocks the whole page.
+    const [summaryResult, tasksResult] = await Promise.allSettled([
+      loadWorkerDashboardData(),
+      fetchTasks()
+    ]);
+
+    if (summaryResult.status === 'rejected') {
+      console.error('Summary load failed:', summaryResult.reason);
+    }
+
+    if (tasksResult.status === 'rejected') {
+      console.error('Task load failed:', tasksResult.reason);
+    }
+});
+
+// ── SEVERITY MAPPER ── Maps DB severity string → { sev, sevKey }
+// Only 3 tiers: High (h), Medium (m), Low (l). Critical is treated as High.
+function mapSeverity(raw) {
+  const s = (raw || 'Medium').trim();
+  if (s === 'High'   || s === 'Critical') return { sev: 'High',   sevKey: 'h' };
+  if (s === 'Low')                         return { sev: 'Low',    sevKey: 'l' };
+  return                                          { sev: 'Medium', sevKey: 'm' };
+}
+
+async function fetchTasks() {
+    try {
+        const data = await fetchJsonWithTimeout(`${API_BASE}/api/tasks/available`);
+
+        if (data.success) {
+            // Map the MongoDB data to the format your UI expects
+            reports = data.tasks.map(task => {
+                const { sev, sevKey } = mapSeverity(task.severity);
+                return {
+                    id: task._id.toString(),
+                    type: task.garbageType,
+                    addr: task.location.address,
+                    sev,
+                    sevKey,
+                    earn: Number(task.pointsAwarded || 50),
+                    lat: task.location.coordinates.lat,
+                    lng: task.location.coordinates.lng
+                };
+            });
+
+            // Sync the arrays and IDs
+            reportLatLngs = reports.map(r => [r.lat, r.lng]);
+            pendingSet = new Set(reports.map((_, i) => i));
+
+            // Update UI numbers
+            document.getElementById('pendingCount').textContent = reports.length;
+            document.getElementById('nearbyCount').textContent = `${reports.length} NEARBY`;
+
+            // Draw the pins and list
+            renderPins();
+            renderList();
+        }
+    } catch (err) {
+        console.error('fetchTasks failed:', err);
+        showToast('❌', 'Sync Error', 'Could not reach server.');
+    }
+}
+
+// ── BACKEND INTEGRATION POINT ──
+// Call this function with your API response to populate the entire dashboard.
+// Example:
+//   fetch('/api/worker/dashboard').then(r=>r.json()).then(populateDashboard);
+//
+// Expected shape of `data`:
+// {
+//   worker:  { name, id, zone, initials, rating },
+//   stats:   { doneToday, nearbyPending },
+//   earnings:{ month:{big,jobs,per,bonus}, week:{...}, today:{...}, recentPayouts:[{icon,desc,date,amt},...], monthLabel },
+//   barChart:[ { count, pct } x7 ],   // Mon→Sun, pct = 0–100
+//   reports: [ { id, type, addr, dist, sev, sevKey, pts, earn, lat, lng }, ... ]
+// }
+function populateDashboard(data) {
+  const w = data.worker;
+
+  // Greeting & nav
+  document.getElementById('workerName').textContent  = w.name;
+  document.getElementById('workerId').textContent    = w.id;
+  document.getElementById('workerZone').textContent  = w.zone;
+  document.getElementById('navAvatar').textContent   = w.initials;
+  const mapWorkerLabel = document.getElementById('mapWorkerLabel');
+  if (mapWorkerLabel) {
+    mapWorkerLabel.textContent = `${w.name} · ${w.id}`;
+  }
+
+  // Quick stats
+  document.getElementById('pendingCount').textContent = data.stats.nearbyPending;
+  document.getElementById('nearbyCount').textContent  = `${data.stats.nearbyPending} NEARBY`;
+
+  // Earnings
+  const e = data.earnings;
+  document.getElementById('earningsMonth').textContent = e.monthLabel;
+  Object.assign(earnData, { month: e.month, week: e.week, today: e.today });
+  // Animate earn counter
+  const target = parseInt(String(e.month.big).replace(/[^0-9]/g,'')) || 0;
+  let s = 0, step = target / (1200 / 16);
+  const animTick = () => { s = Math.min(s + step, target); document.getElementById('earnBig').textContent = '₹' + Math.round(s).toLocaleString('en-IN'); if (s < target) requestAnimationFrame(animTick); };
+  requestAnimationFrame(animTick);
+  document.getElementById('egJobs').textContent  = e.month.jobs;
+  document.getElementById('egPer').textContent   = e.month.per;
+
+
+
+  // Reports & map pins
+  reports = data.reports;
+  reportLatLngs = data.reports.map(r => [r.lat, r.lng]);
+  pendingSet = new Set(reports.map((_, i) => i));
+  totalEarn = target;
+  renderPins();
+  renderList();
+}
+
+/* PROFILE PICTURE FUNCTIONALITY */
+async function setupProfilePopover() {
+  const navAvatar = document.getElementById('navAvatar');
+  const popover = document.getElementById('profilePopover');
+  const fileInput = document.getElementById('profilePictureInput');
+  const cameraOverlay = document.getElementById('cameraOverlay');
+  const profileAvatarLarge = document.getElementById('popoverAvatar');
+
+  // Open popover on avatar click
+  navAvatar.addEventListener('click', (e) => {
+    e.stopPropagation();
+    popover.classList.toggle('show');
+  });
+
+  // Trigger file input on camera icon or large avatar click
+  cameraOverlay.addEventListener('click', () => fileInput.click());
+  profileAvatarLarge.addEventListener('click', () => fileInput.click());
+
+  // Handle file selection
+  fileInput.addEventListener('change', async (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      const reader = new FileReader();
+      reader.onload = async (event) => {
+        const dataUrl = event.target.result;
+        // Save to backend
+        const userId = localStorage.getItem('userId');
+        const saved = await saveProfilePictureToDB(userId, dataUrl);
+        if (saved) {
+          // Update all avatars immediately, then sync from the backend record
+          updateAllAvatars(dataUrl);
+        }
+        // Close popover
+        popover.classList.remove('show');
+        showToast('🎉', 'Profile Updated', 'Your picture has been changed successfully');
+      };
+      reader.readAsDataURL(file);
+    }
+  });
+
+  // Close popover on outside click
+  document.addEventListener('click', (e) => {
+    if (!popover.contains(e.target) && !navAvatar.contains(e.target)) {
+      popover.classList.remove('show');
+    }
+  });
+}
+
+function formatMoney(value) {
+  return '₹' + Number(value || 0).toLocaleString('en-IN');
+}
+
+function transformActiveJob(report) {
+  if (!report) {
+    return null;
+  }
+
+  const coordinates = report.location && report.location.coordinates ? report.location.coordinates : {};
+
+  // Force _id to a plain string — Mongoose ObjectId objects serialize badly in URLs
+  const reportId = (report._id && report._id.toString) ? report._id.toString() : String(report._id);
+  // Use DB severity (stored by citizen at submission time)
+  const { sev, sevKey } = mapSeverity(report.severity);
+  return {
+    id: reportId,
+    type: report.garbageType || 'Assigned Job',
+    addr: report.location && report.location.address ? report.location.address : 'Unknown location',
+    sev,
+    sevKey,
+    earn: Number(report.pointsAwarded || 50),
+    lat: coordinates.lat,
+    lng: coordinates.lng
+  };
+}
+
+function renderActiveJobBanner(job) {
+  const banner = document.getElementById('activeJobBanner');
+
+  if (!job) {
+    banner.classList.remove('show');
+    return;
+  }
+
+  document.getElementById('ajType').textContent = job.type;
+  document.getElementById('ajAddr').textContent = job.addr;
+
+  // Colour-code the severity value
+  const ajSevEl = document.getElementById('ajSev');
+  ajSevEl.textContent = job.sev || '—';
+  const sevColour = { High: '#ef4444', Medium: '#f0b429', Low: '#00d97e' };
+  ajSevEl.style.color = sevColour[job.sev] || 'var(--text)';
+
+  banner.classList.add('show');
+}
+
+async function loadWorkerDashboardData() {
+  try {
+    const userId = localStorage.getItem('userId');
+    if (!userId) {
+      console.warn('No userId found for worker dashboard load');
+      showToast('⚠️', 'Session missing', 'Please log in again to load worker data.');
+      return;
+    }
+
+    console.log('Loading worker dashboard summary for:', userId);
+    const data = await fetchJsonWithTimeout(`${API_BASE}/api/worker/${userId}`, {
+      cache: 'no-store'
+    });
+
+    if (!data.success) {
+      console.warn('Worker dashboard summary request failed');
+      return;
+    }
+
+    const worker = data.worker || {};
+    const earnings = data.earnings || {};
+    const today = earnings.today || { amount: 0, jobs: 0, avg: 0, bonus: 0 };
+    const week = earnings.week || { amount: 0, jobs: 0, avg: 0, bonus: 0 };
+    const month = earnings.month || { amount: 0, jobs: 0, avg: 0, bonus: 0 };
+
+    document.getElementById('workerName').textContent = worker.fullName || localStorage.getItem('userName') || 'Worker';
+    document.getElementById('workerId').textContent = worker.workerID || userId;
+    document.getElementById('workerZone').textContent = worker.department || 'Field Worker';
+    document.getElementById('popoverName').textContent = worker.fullName || localStorage.getItem('userName') || 'Worker';
+
+    // Restore availability state from DB so it survives refresh / re-login
+    applyAvailState(!(worker.isBusy || false));
+    const mapWorkerLabel = document.getElementById('mapWorkerLabel');
+    if (mapWorkerLabel) {
+      mapWorkerLabel.textContent = `${worker.fullName || localStorage.getItem('userName') || 'Worker'} · ${worker.workerID || userId}`;
+    }
+
+    const initial = (worker.fullName || localStorage.getItem('userName') || 'Worker').charAt(0).toUpperCase();
+    document.getElementById('navAvatar').textContent = initial;
+    document.getElementById('popoverAvatar').textContent = initial;
+
+    // Load profile picture asynchronously so the main dashboard doesn't block
+    fetchJsonWithTimeout(`${API_BASE}/api/user/profile-picture/${userId}`)
+      .then(d => {
+        if (d && d.success && d.profilePicture) {
+          updateAllAvatars(d.profilePicture);
+        }
+      })
+      .catch(err => console.error('Failed to load profile picture', err));
+
+    document.getElementById('doneCount').textContent = today.jobs;
+    document.getElementById('pendingCount').textContent = String(reports.length);
+    document.getElementById('nearbyCount').textContent = `${reports.length} NEARBY`;
+    document.getElementById('earningsMonth').textContent = new Date().toLocaleDateString('en-IN', { month: 'long', year: 'numeric' });
+
+    Object.assign(earnData, {
+      month: {
+        big: formatMoney(month.amount),
+        jobs: month.jobs,
+        per: formatMoney(month.avg),
+        bonus: formatMoney(month.bonus)
+      },
+      week: {
+        big: formatMoney(week.amount),
+        jobs: week.jobs,
+        per: formatMoney(week.avg),
+        bonus: formatMoney(week.bonus)
+      },
+      today: {
+        big: formatMoney(today.amount),
+        jobs: today.jobs,
+        per: formatMoney(today.avg),
+        bonus: formatMoney(today.bonus)
+      }
+    });
+
+    // Calculate and show Available Balance
+    document.getElementById('earnBig').textContent = formatMoney((worker.totalEarnings || 0) - (worker.totalWithdrawn || 0));
+    document.getElementById('earnSub').textContent = "Available balance";
+    document.getElementById('earningsMonth').textContent = "READY TO WITHDRAW";
+    document.getElementById('egJobs').textContent = earnData.month.jobs;
+    document.getElementById('egPer').textContent = earnData.month.per;
+    totalEarn = Number(worker.totalEarnings ?? month.amount ?? 0);
+    doneCount = Number(today.jobs || 0);
+
+    currentActiveJob = transformActiveJob(data.activeJob);
+    renderActiveJobBanner(currentActiveJob);
+
+    if (!currentActiveJob) {
+      document.getElementById('activeJobBanner').classList.remove('show');
+    }
+  } catch (err) {
+    console.error('❌ Failed to load worker dashboard data:', err);
+    showToast('⚠️', 'Summary delayed', 'Using available data while worker summary loads.');
+  }
+}
+
+async function saveProfilePictureToDB(userId, dataUrl) {
+  try {
+    console.log('Saving profile picture...');
+    const data = await fetchJsonWithTimeout(`${API_BASE}/api/user/profile-picture`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ userId, profilePicture: dataUrl })
+    }, 20000);
+    if (data.success) {
+      console.log('✅ Profile picture saved');
+      await loadWorkerDashboardData();
+      return true;
+    } else {
+      console.error('❌ Save failed:', data.message);
+      return false;
+    }
+  } catch (err) {
+    console.error('❌ Failed to save:', err);
+    return false;
+  }
+}
+
+function updateAllAvatars(dataUrl) {
+  // For large avatars - replace with image containers
+  const avatars = [
+    document.getElementById('navAvatar'),
+    document.getElementById('popoverAvatar')
+  ];
+
+  avatars.forEach(avatar => {
+    if (avatar) {
+      // Create an image element inside the avatar
+      avatar.innerHTML = `<img src="${dataUrl}" style="width:100%;height:100%;border-radius:50%;object-fit:cover;"/>`;
+    }
+  });
+}
+
+function logout() {
+    localStorage.clear(); // This wipes Paarth out so Jaideep can move in
+    window.location.href = 'welcome_page-dynamic.html';
+}
+</script>
+</body>
+</html>

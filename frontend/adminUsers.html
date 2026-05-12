@@ -1,0 +1,365 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width,initial-scale=1"/>
+<title>EcoVault — User Management</title>
+<link href="https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700;800;900&family=JetBrains+Mono:wght@400;500;600&display=swap" rel="stylesheet"/>
+<style>
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --g:#00d97e;--g2:#00b864;--g3:#007a42;--g4:#004d2a;
+  --dark:#060d0a;--d2:#0a1610;--d3:#0f2018;--d4:#162b1e;
+  --text:#e2f0ea;--muted:#5a8a72;--dim:#3a6050;
+  --warn:#f0b429;--info:#38bdf8;--danger:#ef4444;--gold:#ffd700;
+  --r:10px;--r2:16px;--r3:20px;--sidebar:220px;
+}
+*{font-family:'Outfit',sans-serif}
+html{scroll-behavior:smooth}
+body{background:var(--dark);color:var(--text);min-height:100vh;display:flex;overflow-x:hidden}
+
+.noise{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.018;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
+.scan{position:fixed;left:0;right:0;height:1px;z-index:0;background:linear-gradient(90deg,transparent,rgba(0,217,126,0.2),transparent);animation:scan 10s linear infinite;pointer-events:none}
+@keyframes scan{0%{top:-1%}100%{top:101%}}
+
+/* SIDEBAR */
+.sidebar{
+  width:var(--sidebar);min-width:var(--sidebar);height:100vh;
+  position:sticky;top:0;z-index:10;
+  background:rgba(10,22,16,0.96);
+  border-right:1px solid rgba(0,217,126,0.1);
+  display:flex;flex-direction:column;
+  backdrop-filter:blur(20px);
+}
+.sb-brand{padding:20px 18px 14px;border-bottom:1px solid rgba(0,217,126,0.08)}
+.sb-brand-row{display:flex;align-items:center;gap:9px;margin-bottom:6px}
+.sb-ico{width:32px;height:32px;background:var(--g);border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;flex-shrink:0}
+.sb-name{font-size:16px;font-weight:800}
+.sb-name span{color:var(--g)}
+.sb-badge{display:inline-flex;align-items:center;gap:5px;background:rgba(255,215,0,0.08);border:1px solid rgba(255,215,0,0.2);border-radius:6px;padding:3px 9px;font-size:10px;font-weight:700;color:var(--gold);font-family:'JetBrains Mono',monospace;letter-spacing:1px}
+.sb-nav{flex:1;padding:12px}
+.sb-sec{font-size:10px;letter-spacing:2px;text-transform:uppercase;color:var(--dim);font-family:'JetBrains Mono',monospace;padding:10px 8px 6px}
+.sb-item{
+  display:flex;align-items:center;gap:9px;
+  padding:9px 11px;border-radius:var(--r);
+  color:var(--muted);font-size:13px;font-weight:500;
+  cursor:pointer;transition:all 0.2s;margin-bottom:2px;
+  border:none;background:none;width:100%;text-align:left;
+  text-decoration:none;
+}
+.sb-item:hover{background:rgba(0,217,126,0.06);color:var(--text)}
+.sb-item.active{background:rgba(0,217,126,0.1);color:var(--g);border:1px solid rgba(0,217,126,0.15)}
+.sb-icon{font-size:15px;width:20px;text-align:center}
+.sb-bottom{padding:12px;border-top:1px solid rgba(0,217,126,0.08)}
+.sb-back{display:flex;align-items:center;gap:8px;width:100%;padding:9px 11px;border-radius:var(--r);border:1px solid rgba(0,217,126,0.15);background:rgba(0,217,126,0.05);color:var(--g);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;text-decoration:none}
+.sb-back:hover{background:rgba(0,217,126,0.12)}
+
+/* MAIN */
+.main{flex:1;display:flex;flex-direction:column;min-height:100vh;position:relative;z-index:1;overflow:hidden}
+.topbar{
+  height:58px;display:flex;align-items:center;justify-content:space-between;
+  padding:0 28px;background:rgba(6,13,10,0.7);
+  border-bottom:1px solid rgba(0,217,126,0.08);
+  backdrop-filter:blur(10px);position:sticky;top:0;z-index:5;flex-shrink:0;
+}
+.tb-title{font-size:17px;font-weight:700}
+.tb-sub{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace}
+.tb-right{display:flex;align-items:center;gap:10px}
+.live-pill{display:flex;align-items:center;gap:5px;background:rgba(0,217,126,0.08);border:1px solid rgba(0,217,126,0.2);border-radius:100px;padding:4px 11px;font-size:11px;color:var(--g);font-family:'JetBrains Mono',monospace}
+.live-d{width:5px;height:5px;border-radius:50%;background:var(--g);animation:blink 2s infinite}
+@keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
+.btn-ref{display:flex;align-items:center;gap:5px;padding:6px 13px;border-radius:8px;border:1px solid rgba(0,217,126,0.2);background:transparent;color:var(--g);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s}
+.btn-ref:hover{background:rgba(0,217,126,0.08)}
+
+.content{flex:1;overflow-y:auto;padding:24px 28px}
+
+/* STATS */
+.stats-row{display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:22px}
+.scard{
+  background:rgba(10,22,16,0.8);border:1px solid rgba(0,217,126,0.08);
+  border-radius:var(--r2);padding:18px;position:relative;overflow:hidden;
+  transition:all 0.2s;
+}
+.scard:hover{border-color:rgba(0,217,126,0.2);transform:translateY(-2px)}
+.scard::before{content:'';position:absolute;top:0;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,217,126,0.25),transparent)}
+.sc-lbl{font-size:10px;text-transform:uppercase;letter-spacing:1.5px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-bottom:9px}
+.sc-val{font-size:30px;font-weight:800;font-family:'JetBrains Mono',monospace;line-height:1}
+.sc-val.g{color:var(--g)}.sc-val.w{color:var(--warn)}.sc-val.i{color:var(--info)}.sc-val.d{color:var(--danger)}
+.sc-sub{font-size:11px;color:var(--muted);margin-top:5px}
+.sc-icon{position:absolute;right:14px;top:14px;font-size:26px;opacity:0.12}
+
+/* TABLE */
+.tcard{background:rgba(10,22,16,0.8);border:1px solid rgba(0,217,126,0.08);border-radius:var(--r2);overflow:hidden}
+.thead-row{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(0,217,126,0.07)}
+.thead-title{font-size:14px;font-weight:700}
+.thead-meta{font-size:11px;color:var(--muted);font-family:'JetBrains Mono',monospace;margin-top:2px}
+.ctrls{display:flex;gap:8px;align-items:center;flex-wrap:wrap}
+.s-input{
+  padding:7px 12px;background:rgba(22,43,30,0.6);
+  border:1px solid rgba(0,217,126,0.12);border-radius:8px;
+  color:var(--text);font-size:12px;outline:none;width:200px;transition:all 0.2s;
+}
+.s-input:focus{border-color:rgba(0,217,126,0.35)}
+.s-select{
+  padding:7px 11px;background:rgba(22,43,30,0.6);
+  border:1px solid rgba(0,217,126,0.12);border-radius:8px;
+  color:var(--text);font-size:12px;outline:none;cursor:pointer;
+}
+.s-select option{background:var(--d3)}
+table{width:100%;border-collapse:collapse}
+th{padding:10px 18px;text-align:left;font-size:10px;font-weight:600;letter-spacing:1.5px;text-transform:uppercase;color:var(--dim);font-family:'JetBrains Mono',monospace;border-bottom:1px solid rgba(0,217,126,0.06);background:rgba(6,13,10,0.4)}
+td{padding:13px 18px;border-bottom:1px solid rgba(0,217,126,0.04);font-size:13px;vertical-align:middle}
+tr:hover td{background:rgba(0,217,126,0.025)}
+tr:last-child td{border-bottom:none}
+.mono{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+
+/* BADGES */
+.badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace}
+.b-active{background:rgba(0,217,126,0.1);color:var(--g);border:1px solid rgba(0,217,126,0.2)}
+.b-blocked{background:rgba(239,68,68,0.1);color:#f87171;border:1px solid rgba(239,68,68,0.2)}
+.b-worker{background:rgba(56,189,248,0.08);color:var(--info);border:1px solid rgba(56,189,248,0.15)}
+.b-citizen{background:rgba(0,217,126,0.07);color:var(--g);border:1px solid rgba(0,217,126,0.12)}
+
+/* ACTION BTNS */
+.btn-a{padding:5px 11px;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;transition:all 0.2s;border:none}
+.btn-block{background:rgba(239,68,68,0.1);color:#f87171;border:1px solid rgba(239,68,68,0.2)}
+.btn-block:hover{background:rgba(239,68,68,0.22)}
+.btn-unblock{background:rgba(0,217,126,0.1);color:var(--g);border:1px solid rgba(0,217,126,0.2)}
+.btn-unblock:hover{background:rgba(0,217,126,0.22)}
+
+/* EMPTY / LOADING */
+.empty{padding:50px;text-align:center;color:var(--muted);font-size:14px}
+.spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(0,217,126,0.15);border-top-color:var(--g);border-radius:50%;animation:spin 0.7s linear infinite}
+@keyframes spin{to{transform:rotate(360deg)}}
+
+/* TOAST */
+#toast{position:fixed;bottom:22px;right:22px;z-index:100;display:none;align-items:center;gap:8px;background:rgba(10,22,16,0.96);border:1px solid rgba(0,217,126,0.25);border-radius:var(--r2);padding:13px 18px;font-size:13px;font-weight:600;color:var(--g);box-shadow:0 8px 32px rgba(0,0,0,0.4)}
+
+::-webkit-scrollbar{width:4px}
+::-webkit-scrollbar-track{background:var(--dark)}
+::-webkit-scrollbar-thumb{background:var(--g4);border-radius:3px}
+</style>
+</head>
+<body>
+<div class="noise"></div>
+<div class="scan"></div>
+
+<!-- SIDEBAR -->
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-brand-row">
+      <div class="sb-ico">♻</div>
+      <div class="sb-name">Eco<span>Vault</span></div>
+    </div>
+    <div class="sb-badge">👑 ADMIN</div>
+  </div>
+  <nav class="sb-nav">
+    <div class="sb-sec">Admin Panels</div>
+    <a class="sb-item active" href="adminUsers.html"><span class="sb-icon">👥</span> User Management</a>
+    <a class="sb-item" href="adminWorkers.html"><span class="sb-icon">🚛</span> Worker Status</a>
+    <a class="sb-item" href="adminComplaints.html"><span class="sb-icon">📋</span> Complaints</a>
+    <a class="sb-item" href="workerpayment.html"><span class="sb-icon">💸</span> Worker Payments</a>
+  </nav>
+  <div class="sb-bottom">
+    <a class="sb-back" href="adminHome.html">← Admin Home</a>
+  </div>
+</aside>
+
+<!-- MAIN -->
+<main class="main">
+  <div class="topbar">
+    <div>
+      <div class="tb-title">👥 User Management</div>
+      <div class="tb-sub">Block / Unblock citizens and workers</div>
+    </div>
+    <div class="tb-right">
+      <div class="live-pill"><div class="live-d"></div>LIVE</div>
+      <button class="btn-ref" onclick="loadUsers()">↻ Refresh</button>
+    </div>
+  </div>
+
+  <div class="content">
+    <!-- Stats -->
+    <div class="stats-row">
+      <div class="scard">
+        <div class="sc-icon">👥</div>
+        <div class="sc-lbl">Total Users</div>
+        <div class="sc-val" id="s-total">—</div>
+        <div class="sc-sub">All accounts</div>
+      </div>
+      <div class="scard">
+        <div class="sc-icon">✅</div>
+        <div class="sc-lbl">Active</div>
+        <div class="sc-val g" id="s-active">—</div>
+        <div class="sc-sub">Not blocked</div>
+      </div>
+      <div class="scard">
+        <div class="sc-icon">🚛</div>
+        <div class="sc-lbl">Workers</div>
+        <div class="sc-val i" id="s-workers">—</div>
+        <div class="sc-sub">Registered workers</div>
+      </div>
+      <div class="scard">
+        <div class="sc-icon">🚫</div>
+        <div class="sc-lbl">Blocked</div>
+        <div class="sc-val d" id="s-blocked">—</div>
+        <div class="sc-sub">Suspended</div>
+      </div>
+    </div>
+
+    <!-- Table -->
+    <div class="tcard">
+      <div class="thead-row">
+        <div>
+          <div class="thead-title">All Registered Users</div>
+          <div class="thead-meta" id="tableMeta">Loading…</div>
+        </div>
+        <div class="ctrls">
+          <input class="s-input" type="text" id="searchQ" placeholder="🔍 Name or email…" oninput="filter()"/>
+          <select class="s-select" id="roleF" onchange="filter()">
+            <option value="">All Roles</option>
+            <option value="citizen">Citizen</option>
+            <option value="worker">Worker</option>
+          </select>
+          <select class="s-select" id="statusF" onchange="filter()">
+            <option value="">All Status</option>
+            <option value="active">Active</option>
+            <option value="blocked">Blocked</option>
+          </select>
+        </div>
+      </div>
+      <table>
+        <thead>
+          <tr>
+            <th>Full Name</th>
+            <th>Email</th>
+            <th>Role</th>
+            <th>Green Points</th>
+            <th>Status</th>
+            <th>Joined</th>
+            <th>Action</th>
+          </tr>
+        </thead>
+        <tbody id="tbody">
+          <tr><td colspan="7" class="empty"><div class="spinner"></div> Loading users…</td></tr>
+        </tbody>
+      </table>
+    </div>
+  </div>
+</main>
+
+<div id="toast"></div>
+
+<script>
+const API = 'http://127.0.0.1:5000';
+let all = [], filtered = [];
+
+async function loadUsers() {
+  document.getElementById('tbody').innerHTML = '<tr><td colspan="7" class="empty"><div class="spinner"></div> Loading…</td></tr>';
+  try {
+    const r = await fetch(`${API}/api/admin/users`);
+    const d = await r.json();
+    all = d.users || [];
+    filtered = [...all];
+    updateStats();
+    render();
+  } catch(e) {
+    document.getElementById('tbody').innerHTML = '<tr><td colspan="7" class="empty">⚠️ Could not connect to server. Is it running?</td></tr>';
+  }
+}
+
+function updateStats() {
+  document.getElementById('s-total').textContent   = all.length;
+  document.getElementById('s-active').textContent  = all.filter(u=>!u.isBlocked).length;
+  document.getElementById('s-workers').textContent = all.filter(u=>u.role==='worker').length;
+  document.getElementById('s-blocked').textContent = all.filter(u=>u.isBlocked).length;
+}
+
+function filter() {
+  const q = document.getElementById('searchQ').value.toLowerCase();
+  const role = document.getElementById('roleF').value;
+  const status = document.getElementById('statusF').value;
+  filtered = all.filter(u => {
+    const mq = !q || u.fullName?.toLowerCase().includes(q) || u.email?.toLowerCase().includes(q);
+    const mr = !role || u.role === role;
+    const ms = !status || (status==='active'&&!u.isBlocked) || (status==='blocked'&&u.isBlocked);
+    return mq && mr && ms;
+  });
+  render();
+}
+
+function render() {
+  const tbody = document.getElementById('tbody');
+  document.getElementById('tableMeta').textContent = `Showing ${filtered.length} of ${all.length} users`;
+  if (!filtered.length) {
+    tbody.innerHTML = '<tr><td colspan="7" class="empty">No users match the filter.</td></tr>';
+    return;
+  }
+  tbody.innerHTML = filtered.map(u => {
+    const joined = u.createdAt ? new Date(u.createdAt).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric', hour:'2-digit', minute:'2-digit', hour12:true}) : '—';
+    const statusB = u.isBlocked
+      ? '<span class="badge b-blocked">🚫 Blocked</span>'
+      : '<span class="badge b-active">✅ Active</span>';
+    const roleB = u.role==='worker'
+      ? '<span class="badge b-worker">🚛 Worker</span>'
+      : '<span class="badge b-citizen">🌿 Citizen</span>';
+    const actionB = u.isBlocked
+      ? `<button class="btn-a btn-unblock" onclick="toggleBlock('${u._id}',false)">✅ Unblock</button>`
+      : `<button class="btn-a btn-block" onclick="toggleBlock('${u._id}',true)">🚫 Block</button>`;
+    return `<tr>
+      <td><strong>${esc(u.fullName||'—')}</strong></td>
+      <td><span class="mono">${esc(u.email||'—')}</span></td>
+      <td>${roleB}</td>
+      <td><span class="mono" style="color:var(--g)">${u.greenPoints??0} pts</span></td>
+      <td>${statusB}</td>
+      <td><span class="mono">${joined}</span></td>
+      <td>${actionB}</td>
+    </tr>`;
+  }).join('');
+}
+
+async function toggleBlock(id, block) {
+  try {
+    console.log(`📤 Sending block request for user ${id}, isBlocked=${block}`);
+    const r = await fetch(`${API}/api/admin/users/${id}/block`, {
+      method:'PUT', headers:{'Content-Type':'application/json'},
+      body: JSON.stringify({ isBlocked: block })
+    });
+    console.log(`📥 Server response status: ${r.status}`);
+    const d = await r.json();
+    console.log(`📦 Response data:`, d);
+    
+    if (d.success) {
+      // Update from server response to ensure data persistence
+      const u = all.find(u=>u._id===id);
+      if (u && d.user) {
+        Object.assign(u, d.user);
+        u.isBlocked = Boolean(d.user.isBlocked);
+        console.log(`✅ Local state updated. User ${u.email} isBlocked=${u.isBlocked}`);
+      }
+      updateStats(); 
+      render();
+      toast(block ? '🚫 User blocked' : '✅ User unblocked');
+    } else {
+      console.error('❌ Server returned success=false:', d.message);
+      toast('⚠️ ' + (d.message||'Failed'), true);
+    }
+  } catch (err) { 
+    console.error('❌ Block error:', err);
+    toast('⚠️ Server error', true);
+  }
+}
+
+function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
+function toast(msg, err=false) {
+  const t = document.getElementById('toast');
+  t.style.display='flex'; t.textContent=msg;
+  t.style.color = err?'#f87171':'var(--g)';
+  t.style.borderColor = err?'rgba(239,68,68,0.3)':'rgba(0,217,126,0.25)';
+  clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none', 3000);
+}
+
+loadUsers();
+</script>
+</body>
+</html>

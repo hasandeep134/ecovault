@@ -1,0 +1,13 @@
+{
+    "liveServer.settings.port": 5501,
+    "liveServer.settings.delay": 3000,
+    "liveServer.settings.useLocalIp": true,
+    "liveServer.settings.ignoreFiles": [
+        ".vscode/**",
+        "**/*.scss",
+        "**/*.sass",
+        "backend/**",
+        "uploads/**"
+    ],
+    "git.ignoreLimitWarning": true
+}
