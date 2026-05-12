@@ -1109,7 +1109,7 @@ window.addEventListener('load', async () => {
     // 2. Fetch fresh points/data from backend
 async function refreshUserUI() {
   try {
-    const response = await fetch(`http://127.0.0.1:5000/api/user/${localStorage.getItem('userId')}`);
+    const response = await fetch(`/api/user/${localStorage.getItem('userId')}`);
     const userData = await response.json();
         
       if (userData.success) {
@@ -1291,7 +1291,7 @@ async function submitRequest(event) {
         btn.disabled = true;
         btn.innerHTML = "<span>⏳</span> Scanning with AI...";
 
-        const response = await fetch('http://127.0.0.1:5000/api/reports', {
+        const response = await fetch('/api/reports', {
             method: 'POST',
             body: formData
         });
@@ -1409,7 +1409,7 @@ function toggleViewAll() {
 async function loadMyRequests() {
     const userId = localStorage.getItem('userId');
     try {
-        const response = await fetch(`http://127.0.0.1:5000/api/reports/active/${userId}`);
+        const response = await fetch(`/api/reports/active/${userId}`);
         const data = await response.json();
         allReports = (data.success && data.reports.length > 0) ? data.reports : [];
         showingAll = false;
@@ -1463,7 +1463,7 @@ async function refreshTracker() {
 
 async function renderTracker(reportId) {
     try {
-        const res  = await fetch(`http://127.0.0.1:5000/api/reports/track/${reportId}`);
+        const res  = await fetch(`/api/reports/track/${reportId}`);
         const data = await res.json();
         if (!data.success) return;
 
@@ -1672,7 +1672,7 @@ async function loadProfilePictureFromDB() {
     }
     
     console.log('Loading profile picture for user:', userId);
-    const response = await fetch(`http://127.0.0.1:5000/api/user/profile-picture/${userId}`);
+    const response = await fetch(`/api/user/profile-picture/${userId}`);
     const data = await response.json();
     
     if (data.success && data.profilePicture) {
@@ -1690,7 +1690,7 @@ async function loadProfilePictureFromDB() {
 async function saveProfilePictureToDB(userId, dataUrl) {
   try {
     console.log('Saving profile picture to DB for user:', userId);
-    const response = await fetch('http://127.0.0.1:5000/api/user/profile-picture', {
+    const response = await fetch('/api/user/profile-picture', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, profilePicture: dataUrl })

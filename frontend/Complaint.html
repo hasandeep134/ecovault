@@ -716,7 +716,7 @@ input.input-valid{border-color:rgba(0,217,126,0.4)!important}
 })();
 
 // ── COMPLAINT API FUNCTIONS ──
-const COMPLAINT_API_BASE = 'http://127.0.0.1:5000/api/complaints';
+const COMPLAINT_API_BASE = '/api/complaints';
 
 async function submitComplaint(payload) {
   try {
@@ -760,7 +760,7 @@ async function fetchComplaintById(complaintId) {
 async function loadUserPoints() {
   try {
     const userId = localStorage.getItem('userId');
-    const res  = await fetch(`http://127.0.0.1:5000/api/user/${userId}`);
+    const res  = await fetch(`/api/user/${userId}`);
     const data = await res.json();
     if (data.success) {
       const pts = data.points || 0;
@@ -885,7 +885,7 @@ async function validateAgainstField() {
   if (isGeneralText(val)) { workerValidState = 'general'; showWorkerMsg('valid', '✓ General complaint — no Worker ID required.'); return; }
   if (!WORKER_CATEGORIES.includes(cat)) { hideWorkerMsg(); workerValidState = 'general'; return; }
   try {
-    const res = await fetch(`http://127.0.0.1:5000/api/workers/validate/${encodeURIComponent(val)}`);
+    const res = await fetch(`/api/workers/validate/${encodeURIComponent(val)}`);
     const data = await res.json();
     if (data.valid) {
       workerValidState = true;
@@ -1140,7 +1140,7 @@ async function loadComplaintProfilePicture() {
     if (!userId) return;
     
     console.log('Loading complaint profile picture...');
-    const response = await fetch(`http://127.0.0.1:5000/api/user/profile-picture/${userId}`);
+    const response = await fetch(`/api/user/profile-picture/${userId}`);
     const data = await response.json();
     if (data.success && data.profilePicture) {
       console.log('✅ Profile picture loaded');

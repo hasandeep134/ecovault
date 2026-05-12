@@ -838,7 +838,7 @@ window.addEventListener('load', async () => {
 async function loadUserPoints() {
   try {
     const userId = localStorage.getItem('userId');
-    const res  = await fetch(`http://127.0.0.1:5000/api/user/${userId}`);
+    const res  = await fetch(`/api/user/${userId}`);
     const data = await res.json();
     if (data.success) {
       currentPoints = data.points || 0;
@@ -861,7 +861,7 @@ async function loadUserPoints() {
 async function loadProfilePic() {
   try {
     const userId = localStorage.getItem('userId');
-    const res = await fetch(`http://127.0.0.1:5000/api/user/profile-picture/${userId}`);
+    const res = await fetch(`/api/user/profile-picture/${userId}`);
     const data = await res.json();
     if (data.success && data.profilePicture) {
       ['sidebarAvatar','topbarAvatar'].forEach(id => {
@@ -948,7 +948,7 @@ async function redeemCoupon(key) {
   let newBalance = currentPoints - c.pts;
 
   try {
-    const res = await fetch('http://127.0.0.1:5000/api/user/deduct-points', {
+    const res = await fetch('/api/user/deduct-points', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, points: c.pts })
@@ -1006,7 +1006,7 @@ function copyCode() {
 async function loadHistoryFromDB() {
   try {
     const userId = localStorage.getItem('userId');
-    const res = await fetch(`http://127.0.0.1:5000/api/user/redemption-history/${userId}`);
+    const res = await fetch(`/api/user/redemption-history/${userId}`);
     const data = await res.json();
     if (data.success) {
       redemptionHistory = data.history.map(h => ({
@@ -1028,7 +1028,7 @@ async function loadHistoryFromDB() {
 async function saveRedemptionToDB(entry) {
   try {
     const userId = localStorage.getItem('userId');
-    await fetch('http://127.0.0.1:5000/api/user/save-redemption', {
+    await fetch('/api/user/save-redemption', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
       body: JSON.stringify({ userId, ...entry })
