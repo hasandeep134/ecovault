@@ -59,7 +59,7 @@ const app = express();
 
 
 app.get('/', (req, res) => {
-  res.sendFile(path.join(__dirname, '../frontend/welcome_page-dynamic.html'));
+   res.send("Server running");
 });
 
 // Increase body parser limit to handle large base64 images
