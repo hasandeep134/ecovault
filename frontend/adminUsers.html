@@ -138,11 +138,103 @@ tr:last-child td{border-bottom:none}
 ::-webkit-scrollbar{width:4px}
 ::-webkit-scrollbar-track{background:var(--dark)}
 ::-webkit-scrollbar-thumb{background:var(--g4);border-radius:3px}
+
+/* ── HAMBURGER BUTTON (mobile only) ── */
+.ham-btn{
+  display:none;
+  flex-direction:column;justify-content:center;align-items:center;
+  width:38px;height:38px;border-radius:9px;
+  border:1px solid rgba(0,217,126,0.2);
+  background:rgba(0,217,126,0.06);
+  cursor:pointer;gap:5px;flex-shrink:0;
+  transition:background 0.2s;
+}
+.ham-btn:hover{background:rgba(0,217,126,0.12)}
+.ham-btn span{display:block;width:18px;height:2px;background:var(--g);border-radius:2px;transition:all 0.3s}
+.ham-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.ham-btn.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.ham-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+/* ── OVERLAY ── */
+.mob-overlay{
+  display:none;position:fixed;inset:0;z-index:19;
+  background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);
+  opacity:0;transition:opacity 0.3s;
+}
+.mob-overlay.show{opacity:1}
+
+/* ── MOBILE TABLE: card layout ── */
+.mob-card-list{display:none}
+
+@media(max-width:768px){
+  /* Show hamburger, hide normal sidebar */
+  .ham-btn{display:flex}
+  .mob-overlay{display:block;pointer-events:none}
+  .mob-overlay.show{pointer-events:auto}
+
+  /* Sidebar becomes a slide-in drawer */
+  .sidebar{
+    position:fixed;top:0;left:0;height:100vh;z-index:20;
+    transform:translateX(-100%);
+    transition:transform 0.32s cubic-bezier(.4,0,.2,1);
+    box-shadow:4px 0 32px rgba(0,0,0,0.5);
+  }
+  .sidebar.open{transform:translateX(0)}
+
+  /* Main takes full width */
+  .main{width:100%}
+
+  /* Topbar adjustments */
+  .topbar{padding:0 14px;gap:8px}
+  .tb-title{font-size:14px}
+  .tb-sub{font-size:10px}
+  .btn-ref span.ref-text{display:none}
+
+  /* Stats: 2×2 grid on mobile */
+  .stats-row{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
+  .scard{padding:14px}
+  .sc-val{font-size:24px}
+  .sc-icon{font-size:20px}
+
+  /* Content padding */
+  .content{padding:14px}
+
+  /* Table header: stack controls */
+  .thead-row{flex-direction:column;align-items:flex-start;gap:10px;padding:12px 14px}
+  .ctrls{width:100%;flex-direction:column}
+  .s-input{width:100%}
+  .s-select{width:100%}
+
+  /* Hide desktop table, show card list */
+  table{display:none}
+  .mob-card-list{display:block;padding:0 0 8px}
+
+  .mob-card{
+    padding:14px 16px;border-bottom:1px solid rgba(0,217,126,0.06);
+    display:flex;flex-direction:column;gap:8px;
+    transition:background 0.15s;
+  }
+  .mob-card:hover{background:rgba(0,217,126,0.025)}
+  .mob-card:last-child{border-bottom:none}
+  .mc-top{display:flex;align-items:center;justify-content:space-between;gap:8px}
+  .mc-name{font-size:14px;font-weight:700;flex:1;min-width:0;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mc-badges{display:flex;gap:5px;flex-wrap:wrap}
+  .mc-email{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--muted);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .mc-meta{display:flex;align-items:center;justify-content:space-between;gap:6px;flex-wrap:wrap}
+  .mc-pts{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--g)}
+  .mc-joined{font-family:'JetBrains Mono',monospace;font-size:10px;color:var(--dim)}
+  .mc-action{display:flex;justify-content:flex-end}
+  .btn-a{padding:6px 14px;font-size:12px}
+
+  /* Toast bottom spacing on mobile */
+  #toast{bottom:16px;right:12px;left:12px;justify-content:center}
+}
 </style>
 </head>
 <body>
 <div class="noise"></div>
 <div class="scan"></div>
+<div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
 
 <!-- SIDEBAR -->
 <aside class="sidebar">
@@ -168,9 +260,14 @@ tr:last-child td{border-bottom:none}
 <!-- MAIN -->
 <main class="main">
   <div class="topbar">
-    <div>
-      <div class="tb-title">👥 User Management</div>
-      <div class="tb-sub">Block / Unblock citizens and workers</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="ham-btn" id="hamBtn" onclick="toggleSidebar()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div>
+        <div class="tb-title">👥 User Management</div>
+        <div class="tb-sub">Block / Unblock citizens and workers</div>
+      </div>
     </div>
     <div class="tb-right">
       <div class="live-pill"><div class="live-d"></div>LIVE</div>
@@ -244,6 +341,7 @@ tr:last-child td{border-bottom:none}
           <tr><td colspan="7" class="empty"><div class="spinner"></div> Loading users…</td></tr>
         </tbody>
       </table>
+      <div class="mob-card-list" id="mobCardList"></div>
     </div>
   </div>
 </main>
@@ -293,6 +391,7 @@ function render() {
   document.getElementById('tableMeta').textContent = `Showing ${filtered.length} of ${all.length} users`;
   if (!filtered.length) {
     tbody.innerHTML = '<tr><td colspan="7" class="empty">No users match the filter.</td></tr>';
+    renderMobCards();
     return;
   }
   tbody.innerHTML = filtered.map(u => {
@@ -316,6 +415,7 @@ function render() {
       <td>${actionB}</td>
     </tr>`;
   }).join('');
+  renderMobCards();
 }
 
 async function toggleBlock(id, block) {
@@ -357,6 +457,41 @@ function toast(msg, err=false) {
   t.style.color = err?'#f87171':'var(--g)';
   t.style.borderColor = err?'rgba(239,68,68,0.3)':'rgba(0,217,126,0.25)';
   clearTimeout(t._t); t._t=setTimeout(()=>t.style.display='none', 3000);
+}
+
+/* ── Hamburger / Sidebar ── */
+function toggleSidebar(){
+  const sb=document.querySelector('.sidebar');
+  const btn=document.getElementById('hamBtn');
+  const ov=document.getElementById('mobOverlay');
+  const open=sb.classList.toggle('open');
+  btn.classList.toggle('open',open);
+  ov.classList.toggle('show',open);
+}
+function closeSidebar(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('hamBtn').classList.remove('open');
+  document.getElementById('mobOverlay').classList.remove('show');
+}
+
+/* ── Mobile card render ── */
+function renderMobCards(){
+  const el=document.getElementById('mobCardList');
+  if(!el)return;
+  if(!filtered.length){el.innerHTML='<div style="padding:40px;text-align:center;color:var(--muted)">No users match the filter.</div>';return;}
+  el.innerHTML=filtered.map(u=>{
+    const joined=u.createdAt?new Date(u.createdAt).toLocaleString('en-IN',{day:'2-digit',month:'short',year:'numeric',hour:'2-digit',minute:'2-digit',hour12:true}):'—';
+    const statusB=u.isBlocked?'<span class="badge b-blocked">🚫 Blocked</span>':'<span class="badge b-active">✅ Active</span>';
+    const roleB=u.role==='worker'?'<span class="badge b-worker">🚛 Worker</span>':'<span class="badge b-citizen">🌿 Citizen</span>';
+    const actionB=u.isBlocked
+      ?`<button class="btn-a btn-unblock" onclick="toggleBlock('${u._id}',false)">✅ Unblock</button>`
+      :`<button class="btn-a btn-block" onclick="toggleBlock('${u._id}',true)">🚫 Block</button>`;
+    return`<div class="mob-card">
+      <div class="mc-top"><span class="mc-name">${esc(u.fullName||'—')}</span><div class="mc-badges">${roleB}${statusB}</div></div>
+      <div class="mc-email">${esc(u.email||'—')}</div>
+      <div class="mc-meta"><span class="mc-pts">${u.greenPoints??0} pts</span><span class="mc-joined">📅 ${joined}</span><div class="mc-action">${actionB}</div></div>
+    </div>`;
+  }).join('');
 }
 
 loadUsers();
