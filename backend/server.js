@@ -52,11 +52,15 @@ async function verifyWasteWithAI(filePath) {
     }
 }
 
+
+
+const app = express();
+
+
+
 app.get('/', (req, res) => {
   res.sendFile(path.join(__dirname, '../frontend/welcome_page-dynamic.html'));
 });
-
-const app = express();
 
 // Increase body parser limit to handle large base64 images
 app.use(express.json({ limit: '50mb' }));
