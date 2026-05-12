@@ -16,11 +16,11 @@
 }
 *{font-family:'Outfit',sans-serif}
 body{background:var(--dark);color:var(--text);min-height:100vh;display:flex;overflow-x:hidden}
-
+ 
 .noise{position:fixed;inset:0;z-index:0;pointer-events:none;opacity:0.018;background-image:url("data:image/svg+xml,%3Csvg viewBox='0 0 200 200' xmlns='http://www.w3.org/2000/svg'%3E%3Cfilter id='n'%3E%3CfeTurbulence type='fractalNoise' baseFrequency='0.9' numOctaves='4' stitchTiles='stitch'/%3E%3C/filter%3E%3Crect width='100%25' height='100%25' filter='url(%23n)'/%3E%3C/svg%3E")}
 .scan{position:fixed;left:0;right:0;height:1px;z-index:0;background:linear-gradient(90deg,transparent,rgba(56,189,248,0.2),transparent);animation:scan 10s linear infinite;pointer-events:none}
 @keyframes scan{0%{top:-1%}100%{top:101%}}
-
+ 
 .sidebar{width:var(--sidebar);min-width:var(--sidebar);height:100vh;position:sticky;top:0;z-index:10;background:rgba(10,22,16,0.96);border-right:1px solid rgba(0,217,126,0.1);display:flex;flex-direction:column;backdrop-filter:blur(20px)}
 .sb-brand{padding:20px 18px 14px;border-bottom:1px solid rgba(0,217,126,0.08)}
 .sb-brand-row{display:flex;align-items:center;gap:9px;margin-bottom:6px}
@@ -37,7 +37,7 @@ body{background:var(--dark);color:var(--text);min-height:100vh;display:flex;over
 .sb-bottom{padding:12px;border-top:1px solid rgba(0,217,126,0.08)}
 .sb-back{display:flex;align-items:center;gap:8px;width:100%;padding:9px 11px;border-radius:var(--r);border:1px solid rgba(0,217,126,0.15);background:rgba(0,217,126,0.05);color:var(--g);font-size:13px;font-weight:600;cursor:pointer;transition:all 0.2s;text-decoration:none}
 .sb-back:hover{background:rgba(0,217,126,0.12)}
-
+ 
 .main{flex:1;display:flex;flex-direction:column;min-height:100vh;position:relative;z-index:1;overflow:hidden}
 .topbar{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(6,13,10,0.7);border-bottom:1px solid rgba(56,189,248,0.08);backdrop-filter:blur(10px);position:sticky;top:0;z-index:5;flex-shrink:0}
 .tb-title{font-size:17px;font-weight:700}
@@ -48,9 +48,9 @@ body{background:var(--dark);color:var(--text);min-height:100vh;display:flex;over
 @keyframes blink{0%,100%{opacity:1}50%{opacity:0.3}}
 .btn-ref{display:flex;align-items:center;gap:5px;padding:6px 13px;border-radius:8px;border:1px solid rgba(56,189,248,0.2);background:transparent;color:var(--info);font-size:12px;font-weight:600;cursor:pointer;transition:all 0.2s}
 .btn-ref:hover{background:rgba(56,189,248,0.08)}
-
+ 
 .content{flex:1;overflow-y:auto;padding:24px 28px}
-
+ 
 .stats-row{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-bottom:22px}
 .scard{background:rgba(10,22,16,0.8);border:1px solid rgba(56,189,248,0.08);border-radius:var(--r2);padding:18px;position:relative;overflow:hidden;transition:all 0.2s}
 .scard:hover{border-color:rgba(56,189,248,0.2);transform:translateY(-2px)}
@@ -60,7 +60,7 @@ body{background:var(--dark);color:var(--text);min-height:100vh;display:flex;over
 .sc-val.g{color:var(--g)}.sc-val.w{color:var(--warn)}.sc-val.i{color:var(--info)}.sc-val.d{color:var(--danger)}
 .sc-sub{font-size:11px;color:var(--muted);margin-top:5px}
 .sc-icon{position:absolute;right:14px;top:14px;font-size:26px;opacity:0.12}
-
+ 
 .tcard{background:rgba(10,22,16,0.8);border:1px solid rgba(56,189,248,0.08);border-radius:var(--r2);overflow:hidden}
 .thead-row{display:flex;align-items:center;justify-content:space-between;padding:16px 20px;border-bottom:1px solid rgba(56,189,248,0.07)}
 .thead-title{font-size:14px;font-weight:700}
@@ -76,22 +76,116 @@ td{padding:13px 18px;border-bottom:1px solid rgba(56,189,248,0.04);font-size:13p
 tr:hover td{background:rgba(56,189,248,0.02)}
 tr:last-child td{border-bottom:none}
 .mono{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
-
+ 
 .badge{display:inline-flex;align-items:center;gap:4px;padding:3px 9px;border-radius:6px;font-size:11px;font-weight:700;font-family:'JetBrains Mono',monospace}
 .b-active{background:rgba(56,189,248,0.08);color:var(--info);border:1px solid rgba(56,189,248,0.18)}
 .b-avail{background:rgba(0,217,126,0.1);color:var(--g);border:1px solid rgba(0,217,126,0.2)}
 .b-blocked{background:rgba(239,68,68,0.1);color:#f87171;border:1px solid rgba(239,68,68,0.2)}
-
+ 
 .empty{padding:50px;text-align:center;color:var(--muted);font-size:14px}
 .spinner{display:inline-block;width:18px;height:18px;border:2px solid rgba(56,189,248,0.15);border-top-color:var(--info);border-radius:50%;animation:spin 0.7s linear infinite}
 @keyframes spin{to{transform:rotate(360deg)}}
 #toast{position:fixed;bottom:22px;right:22px;z-index:100;display:none;align-items:center;gap:8px;background:rgba(10,22,16,0.96);border:1px solid rgba(56,189,248,0.25);border-radius:var(--r2);padding:13px 18px;font-size:13px;font-weight:600;color:var(--info);box-shadow:0 8px 32px rgba(0,0,0,0.4)}
 ::-webkit-scrollbar{width:4px}::-webkit-scrollbar-track{background:var(--dark)}::-webkit-scrollbar-thumb{background:var(--g4);border-radius:3px}
+ 
+/* ── HAMBURGER BUTTON (mobile only) ── */
+.ham-btn{
+  display:none;
+  flex-direction:column;justify-content:center;align-items:center;
+  width:38px;height:38px;border-radius:9px;
+  border:1px solid rgba(56,189,248,0.2);
+  background:rgba(56,189,248,0.06);
+  cursor:pointer;gap:5px;flex-shrink:0;
+  transition:background 0.2s;
+}
+.ham-btn:hover{background:rgba(56,189,248,0.12)}
+.ham-btn span{display:block;width:18px;height:2px;background:var(--info);border-radius:2px;transition:all 0.3s}
+.ham-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.ham-btn.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.ham-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+ 
+/* ── OVERLAY ── */
+.mob-overlay{
+  display:none;position:fixed;inset:0;z-index:19;
+  background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);
+  opacity:0;transition:opacity 0.3s;
+}
+.mob-overlay.show{opacity:1}
+ 
+/* ── MOBILE CARD LIST ── */
+.mob-card-list{display:none}
+ 
+@media(max-width:768px){
+  .ham-btn{display:flex}
+  .mob-overlay{display:block;pointer-events:none}
+  .mob-overlay.show{pointer-events:auto}
+ 
+  /* Sidebar becomes slide-in drawer */
+  .sidebar{
+    position:fixed;top:0;left:0;height:100vh;z-index:20;
+    transform:translateX(-100%);
+    transition:transform 0.32s cubic-bezier(.4,0,.2,1);
+    box-shadow:4px 0 32px rgba(0,0,0,0.5);
+  }
+  .sidebar.open{transform:translateX(0)}
+ 
+  .main{width:100%}
+ 
+  /* Topbar */
+  .topbar{padding:0 14px;gap:8px}
+  .tb-title{font-size:14px}
+  .tb-sub{font-size:10px}
+ 
+  /* Stats: 1×3 stacked or 2+1 */
+  .stats-row{grid-template-columns:repeat(1,1fr);gap:10px;margin-bottom:16px}
+  .scard{padding:14px;display:flex;align-items:center;gap:14px}
+  .scard::before{display:none}
+  .sc-icon{position:static;font-size:22px;opacity:0.5;flex-shrink:0}
+  .sc-lbl{margin-bottom:2px}
+  .sc-val{font-size:26px}
+ 
+  /* Content padding */
+  .content{padding:14px}
+ 
+  /* Table header: stack controls */
+  .thead-row{flex-direction:column;align-items:flex-start;gap:10px;padding:12px 14px}
+  .ctrls{width:100%;flex-direction:column}
+  .s-input{width:100%}
+  .s-select{width:100%}
+ 
+  /* Hide desktop table, show card list */
+  table{display:none}
+  .mob-card-list{display:block;padding:0 0 8px}
+ 
+  .mob-card{
+    padding:14px 16px;border-bottom:1px solid rgba(56,189,248,0.06);
+    display:flex;flex-direction:column;gap:10px;
+    transition:background 0.15s;
+  }
+  .mob-card:hover{background:rgba(56,189,248,0.02)}
+  .mob-card:last-child{border-bottom:none}
+ 
+  .mc-top{display:flex;align-items:center;gap:10px}
+  .mc-avatar{width:38px;height:38px;border-radius:50%;background:linear-gradient(135deg,var(--g3),var(--g2));display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;flex-shrink:0}
+  .mc-name{font-size:15px;font-weight:700;flex:1}
+  .mc-wid{font-family:'JetBrains Mono',monospace;font-size:11px;color:var(--muted)}
+ 
+  .mc-stats{display:flex;gap:16px;flex-wrap:wrap}
+  .mc-stat{display:flex;flex-direction:column;gap:2px}
+  .mc-stat-lbl{font-size:9px;text-transform:uppercase;letter-spacing:1px;color:var(--dim);font-family:'JetBrains Mono',monospace}
+  .mc-stat-val{font-family:'JetBrains Mono',monospace;font-size:18px;font-weight:800}
+ 
+  .mc-bottom{display:flex;justify-content:flex-end}
+ 
+  /* Toast */
+  #toast{bottom:16px;right:12px;left:12px;justify-content:center}
+}
 </style>
 </head>
 <body>
 <div class="noise"></div><div class="scan"></div>
-
+<div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
+ 
 <aside class="sidebar">
   <div class="sb-brand">
     <div class="sb-brand-row"><div class="sb-ico">♻</div><div class="sb-name">Eco<span>Vault</span></div></div>
@@ -106,26 +200,31 @@ tr:last-child td{border-bottom:none}
   </nav>
   <div class="sb-bottom"><a class="sb-back" href="adminHome.html">← Admin Home</a></div>
 </aside>
-
+ 
 <main class="main">
   <div class="topbar">
-    <div>
-      <div class="tb-title">🚛 Worker Status</div>
-      <div class="tb-sub">Live task performance across all workers</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="ham-btn" id="hamBtn" onclick="toggleSidebar()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div>
+        <div class="tb-title">🚛 Worker Status</div>
+        <div class="tb-sub">Live task performance across all workers</div>
+      </div>
     </div>
     <div class="tb-right">
       <div class="live-pill"><div class="live-d"></div>LIVE</div>
       <button class="btn-ref" onclick="loadWorkers()">↻ Refresh</button>
     </div>
   </div>
-
+ 
   <div class="content">
     <div class="stats-row">
       <div class="scard"><div class="sc-icon">🚛</div><div class="sc-lbl">Total Workers</div><div class="sc-val i" id="s-total">—</div><div class="sc-sub">Registered</div></div>
       <div class="scard"><div class="sc-icon">✅</div><div class="sc-lbl">Tasks Completed</div><div class="sc-val g" id="s-done">—</div><div class="sc-sub">All time</div></div>
       <div class="scard"><div class="sc-icon">⏳</div><div class="sc-lbl">Tasks Pending</div><div class="sc-val w" id="s-pending">—</div><div class="sc-sub">Awaiting action</div></div>
     </div>
-
+ 
     <div class="tcard">
       <div class="thead-row">
         <div>
@@ -157,10 +256,11 @@ tr:last-child td{border-bottom:none}
           <tr><td colspan="5" class="empty"><div class="spinner"></div> Loading workers…</td></tr>
         </tbody>
       </table>
+      <div class="mob-card-list" id="mobCardList"></div>
     </div>
   </div>
 </main>
-
+ 
 <div id="toast"></div>
 <script>
 // Auth Guard: Only admins can access this page
@@ -170,10 +270,10 @@ tr:last-child td{border-bottom:none}
     window.location.href = 'welcome_page-dynamic.html';
   }
 })();
-
+ 
 const API = '';
 let all = [], filtered = [];
-
+ 
 async function loadWorkers() {
   document.getElementById('tbody').innerHTML = '<tr><td colspan="5" class="empty"><div class="spinner"></div> Loading…</td></tr>';
   try {
@@ -181,7 +281,7 @@ async function loadWorkers() {
     const d = await r.json();
     all = d.workers || [];
     filtered = [...all];
-
+ 
     document.getElementById('s-total').textContent = all.length;
     document.getElementById('s-done').textContent = d.totalCompleted ?? all.reduce((s,w)=>s+(w.tasksCompleted||0),0);
     document.getElementById('s-pending').textContent = d.totalPending ?? all.reduce((s,w)=>s+(w.tasksPending||0),0);
@@ -190,7 +290,7 @@ async function loadWorkers() {
     document.getElementById('tbody').innerHTML = '<tr><td colspan="5" class="empty">⚠️ Could not connect to server.</td></tr>';
   }
 }
-
+ 
 function filter() {
   const q = document.getElementById('searchQ').value.toLowerCase();
   const status = document.getElementById('statusF').value;
@@ -205,12 +305,16 @@ function filter() {
   });
   render();
 }
-
+ 
 function render() {
   const tbody = document.getElementById('tbody');
   document.getElementById('tableMeta').textContent = `Showing ${filtered.length} of ${all.length} workers`;
-  if (!filtered.length) { tbody.innerHTML='<tr><td colspan="5" class="empty">No workers match the filter.</td></tr>'; return; }
-
+  if (!filtered.length) {
+    tbody.innerHTML='<tr><td colspan="5" class="empty">No workers match the filter.</td></tr>';
+    renderMobCards();
+    return;
+  }
+ 
   tbody.innerHTML = filtered.map(w => {
     const done = w.tasksCompleted || 0;
     const pend = w.tasksPending || 0;
@@ -235,11 +339,69 @@ function render() {
       <td>${statusB}</td>
     </tr>`;
   }).join('');
+  renderMobCards();
 }
-
+ 
+/* ── Mobile card render ── */
+function renderMobCards() {
+  const el = document.getElementById('mobCardList');
+  if (!el) return;
+  if (!filtered.length) {
+    el.innerHTML = '<div style="padding:40px;text-align:center;color:var(--muted)">No workers match the filter.</div>';
+    return;
+  }
+  el.innerHTML = filtered.map(w => {
+    const done = w.tasksCompleted || 0;
+    const pend = w.tasksPending || 0;
+    const statusB = w.isBlocked
+      ? '<span class="badge b-blocked">🚫 Blocked</span>'
+      : w.isBusy
+        ? '<span class="badge b-blocked">🔴 Busy</span>'
+        : pend > 0
+          ? '<span class="badge b-active">⚙️ On Task</span>'
+          : '<span class="badge b-avail">✅ Available</span>';
+    const initials = (w.fullName||'W').split(' ').map(s=>s[0]).join('').toUpperCase().slice(0,2);
+    return `<div class="mob-card">
+      <div class="mc-top">
+        <div class="mc-avatar">${initials}</div>
+        <div style="flex:1;min-width:0">
+          <div class="mc-name">${esc(w.fullName||'—')}</div>
+          <div class="mc-wid">ID: ${esc(w.workerID||'N/A')}</div>
+        </div>
+        ${statusB}
+      </div>
+      <div class="mc-stats">
+        <div class="mc-stat">
+          <div class="mc-stat-lbl">Tasks Done</div>
+          <div class="mc-stat-val" style="color:var(--g)">${done}</div>
+        </div>
+        <div class="mc-stat">
+          <div class="mc-stat-lbl">Pending</div>
+          <div class="mc-stat-val" style="color:${pend>0?'var(--warn)':'var(--muted)'}">${pend}</div>
+        </div>
+      </div>
+    </div>`;
+  }).join('');
+}
+ 
+/* ── Hamburger / Sidebar ── */
+function toggleSidebar(){
+  const sb=document.querySelector('.sidebar');
+  const btn=document.getElementById('hamBtn');
+  const ov=document.getElementById('mobOverlay');
+  const open=sb.classList.toggle('open');
+  btn.classList.toggle('open',open);
+  ov.classList.toggle('show',open);
+}
+function closeSidebar(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('hamBtn').classList.remove('open');
+  document.getElementById('mobOverlay').classList.remove('show');
+}
+ 
 function esc(s){ return String(s||'').replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;') }
 function toast(msg,err=false){const t=document.getElementById('toast');t.style.display='flex';t.textContent=msg;clearTimeout(t._t);t._t=setTimeout(()=>t.style.display='none',3000)}
-
+ 
 loadWorkers();
 </script>
 </body>
