@@ -203,18 +203,7 @@ body{font-family:'Outfit',sans-serif;background:var(--dark);color:var(--text);mi
 @keyframes spin{to{transform:rotate(360deg)}}
 .loading-text{font-size:14px;color:var(--muted)}
 
-@media(max-width:900px){
-  .page{padding:24px 18px 48px}
-  .stats-row{grid-template-columns:1fr 1fr}
-  .wc-header{padding:14px 16px}
-  .wc-body{padding:0 16px 14px}
-  .hist-table th:nth-child(4),.hist-table td:nth-child(4){display:none}
-}
-@media(max-width:600px){
-  .stats-row{grid-template-columns:1fr 1fr}
-  .wc-stats{gap:12px}
-  .hist-table th:nth-child(5),.hist-table td:nth-child(5){display:none}
-}
+
 
 /* TOPBAR */
 .topbar{height:58px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(6,13,10,0.7);border-bottom:1px solid rgba(0,217,126,0.08);backdrop-filter:blur(10px);position:sticky;top:0;z-index:5;flex-shrink:0}
@@ -247,11 +236,106 @@ body{font-family:'Outfit',sans-serif;background:var(--dark);color:var(--text);mi
 
 /* MAIN WRAPPER */
 .main{flex:1;display:flex;flex-direction:column;min-height:100vh;position:relative;z-index:1;overflow:hidden}
+
+/* ── HAMBURGER BUTTON (mobile only) ── */
+.ham-btn{
+  display:none;
+  flex-direction:column;justify-content:center;align-items:center;
+  width:38px;height:38px;border-radius:9px;
+  border:1px solid rgba(0,217,126,0.2);
+  background:rgba(0,217,126,0.06);
+  cursor:pointer;gap:5px;flex-shrink:0;
+  transition:background 0.2s;
+}
+.ham-btn:hover{background:rgba(0,217,126,0.12)}
+.ham-btn span{display:block;width:18px;height:2px;background:var(--g);border-radius:2px;transition:all 0.3s}
+.ham-btn.open span:nth-child(1){transform:translateY(7px) rotate(45deg)}
+.ham-btn.open span:nth-child(2){opacity:0;transform:scaleX(0)}
+.ham-btn.open span:nth-child(3){transform:translateY(-7px) rotate(-45deg)}
+
+/* ── OVERLAY ── */
+.mob-overlay{
+  display:none;position:fixed;inset:0;z-index:19;
+  background:rgba(0,0,0,0.55);backdrop-filter:blur(3px);
+  opacity:0;transition:opacity 0.3s;
+}
+.mob-overlay.show{opacity:1}
+
+@media(max-width:768px){
+  .ham-btn{display:flex}
+  .mob-overlay{display:block;pointer-events:none}
+  .mob-overlay.show{pointer-events:auto}
+
+  /* Sidebar: slide-in drawer */
+  .sidebar{
+    position:fixed;top:0;left:0;height:100vh;z-index:20;
+    transform:translateX(-100%);
+    transition:transform 0.32s cubic-bezier(.4,0,.2,1);
+    box-shadow:4px 0 32px rgba(0,0,0,0.5);
+  }
+  .sidebar.open{transform:translateX(0)}
+
+  .main{width:100%}
+
+  /* Topbar */
+  .topbar{padding:0 14px;gap:8px}
+  .tb-title{font-size:14px}
+  .tb-sub{font-size:10px}
+
+  /* Page padding */
+  .page{padding:16px 14px 48px}
+
+  /* Page header */
+  .page-title{font-size:22px}
+  .page-sub{font-size:12px}
+
+  /* Stats: 2×2 grid */
+  .stats-row{grid-template-columns:1fr 1fr;gap:10px;margin-bottom:18px}
+  .stat-box{padding:14px;gap:10px}
+  .stat-icon{font-size:20px}
+  .stat-val{font-size:18px}
+  .stat-lbl{font-size:10px}
+
+  /* Controls: stack vertically */
+  .controls{flex-direction:column;gap:8px;margin-bottom:16px}
+  .search-wrap{min-width:0;width:100%}
+  .filter-select{width:100%}
+  .refresh-btn{width:100%}
+
+  /* Worker card header: stack on mobile */
+  .wc-header{padding:14px 16px;flex-direction:column;align-items:flex-start;gap:12px}
+  .wc-left{width:100%}
+  .wc-stats{
+    width:100%;display:grid;
+    grid-template-columns:repeat(2,1fr);
+    gap:10px;
+  }
+  .wc-stat{text-align:left}
+  .wc-stat-val{font-size:16px}
+  .wc-toggle{align-self:flex-end;position:absolute;right:16px;top:16px}
+  .wc-header{position:relative}
+
+  /* History table: hide less important columns */
+  .wc-body{padding:0 14px 14px}
+  .hist-table th:nth-child(2),.hist-table td:nth-child(2){display:none} /* destination */
+  .hist-table th:nth-child(4),.hist-table td:nth-child(4){display:none} /* date */
+  .hist-table th,.hist-table td{padding:9px 10px;font-size:11px}
+  .td-amt{font-size:13px}
+
+  /* Action buttons in table */
+  .action-btns{flex-direction:column;gap:4px}
+  .btn-approve,.btn-reject{font-size:10px;padding:4px 8px}
+
+  /* Toast */
+  .toast-fixed{bottom:16px;min-width:0;width:calc(100vw - 28px);left:14px;transform:translateX(0) translateY(100px)}
+  .toast-fixed.show{transform:translateX(0) translateY(0)}
+}
 </style>
 </head>
 <body>
 <div class="noise"></div>
 <div class="scan"></div>
+<div class="mob-overlay" id="mobOverlay" onclick="closeSidebar()"></div>
 
 <div class="bg-fx"><div class="scan-line"></div></div>
 <div class="glow glow-tl"></div>
@@ -280,9 +364,14 @@ body{font-family:'Outfit',sans-serif;background:var(--dark);color:var(--text);mi
 
 <main class="main">
   <div class="topbar">
-    <div>
-      <div class="tb-title">💸 Worker Payments</div>
-      <div class="tb-sub">Withdrawal history and balance overview</div>
+    <div style="display:flex;align-items:center;gap:10px">
+      <button class="ham-btn" id="hamBtn" onclick="toggleSidebar()" aria-label="Menu">
+        <span></span><span></span><span></span>
+      </button>
+      <div>
+        <div class="tb-title">💸 Worker Payments</div>
+        <div class="tb-sub">Withdrawal history and balance overview</div>
+      </div>
     </div>
     <div class="tb-right">
       <div class="live-pill"><div class="live-d"></div>LIVE</div>
@@ -621,6 +710,21 @@ async function updateWithdrawal(withdrawalId, newStatus, workerId, btn){
     showToast('❌', 'Error', 'Could not reach server.');
     if(actionCell) actionCell.querySelectorAll('button').forEach(b => { b.disabled=false; b.style.opacity='1'; });
   }
+}
+
+/* ── Hamburger / Sidebar ── */
+function toggleSidebar(){
+  const sb=document.querySelector('.sidebar');
+  const btn=document.getElementById('hamBtn');
+  const ov=document.getElementById('mobOverlay');
+  const open=sb.classList.toggle('open');
+  btn.classList.toggle('open',open);
+  ov.classList.toggle('show',open);
+}
+function closeSidebar(){
+  document.querySelector('.sidebar').classList.remove('open');
+  document.getElementById('hamBtn').classList.remove('open');
+  document.getElementById('mobOverlay').classList.remove('show');
 }
 
 // Kick off
