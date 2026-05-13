@@ -14,8 +14,8 @@
   --warn:#f0b429;--info:#38bdf8;--danger:#ef4444;
   --r:10px;--r2:16px;--r3:22px;
 }
-html{scroll-behavior:smooth}
-body{font-family:'Outfit',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;overflow-x:hidden}
+html{scroll-behavior:smooth;-webkit-text-size-adjust:100%}
+body{font-family:'Outfit',sans-serif;background:var(--dark);color:var(--text);min-height:100vh;overflow-x:hidden;-webkit-font-smoothing:antialiased}
 
 /* HIDE SPINNERS */
 input[type=number]::-webkit-inner-spin-button,
@@ -24,16 +24,18 @@ input[type=number]{-moz-appearance:textfield;appearance:textfield}
 
 /* BG */
 .bg-layer{position:fixed;inset:0;z-index:0;pointer-events:none;overflow:hidden}
-.bg-orb{position:absolute;border-radius:50%;filter:blur(80px);animation:orbFloat 18s ease-in-out infinite}
-.bg-orb-1{width:500px;height:500px;right:-100px;top:-100px;background:radial-gradient(circle,rgba(0,217,126,0.07),transparent 70%);animation-delay:0s}
-.bg-orb-2{width:400px;height:400px;left:-80px;bottom:100px;background:radial-gradient(circle,rgba(0,184,100,0.05),transparent 70%);animation-delay:-9s}
-.bg-orb-3{width:300px;height:300px;left:50%;top:40%;background:radial-gradient(circle,rgba(0,122,66,0.04),transparent 70%);animation-delay:-5s}
+/* Use static blur (not animated) so Safari doesn't recalculate every frame */
+.bg-orb{position:absolute;border-radius:50%;will-change:transform}
+.bg-orb-1{width:500px;height:500px;right:-100px;top:-100px;background:radial-gradient(circle,rgba(0,217,126,0.07),transparent 70%);animation:orbFloat 18s ease-in-out infinite;animation-delay:0s}
+.bg-orb-2{width:400px;height:400px;left:-80px;bottom:100px;background:radial-gradient(circle,rgba(0,184,100,0.05),transparent 70%);animation:orbFloat 18s ease-in-out infinite;animation-delay:-9s}
+.bg-orb-3{width:300px;height:300px;left:50%;top:40%;background:radial-gradient(circle,rgba(0,122,66,0.04),transparent 70%);animation:orbFloat 18s ease-in-out infinite;animation-delay:-5s}
+/* Only translate — no blur in keyframes (Safari hangs on blur+animation) */
 @keyframes orbFloat{0%,100%{transform:translate(0,0) scale(1)}33%{transform:translate(20px,-30px) scale(1.05)}66%{transform:translate(-15px,20px) scale(0.97)}}
 .scan-line{position:absolute;left:0;right:0;height:1px;background:linear-gradient(90deg,transparent,rgba(0,217,126,0.18),transparent);animation:scanDown 14s linear infinite}
 @keyframes scanDown{0%{top:-1%}100%{top:101%}}
 
 /* NAV */
-.topnav{position:sticky;top:0;z-index:50;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(6,13,10,0.88);border-bottom:1px solid rgba(0,217,126,0.1);backdrop-filter:blur(24px)}
+.topnav{position:sticky;top:0;z-index:50;height:64px;display:flex;align-items:center;justify-content:space-between;padding:0 28px;background:rgba(6,13,10,0.88);border-bottom:1px solid rgba(0,217,126,0.1);backdrop-filter:blur(24px);-webkit-backdrop-filter:blur(24px)}
 .nav-left{display:flex;align-items:center;gap:16px}
 .nav-brand{display:flex;align-items:center;gap:9px;text-decoration:none}
 .nav-ico{width:34px;height:34px;background:linear-gradient(135deg,var(--g3),var(--g));border-radius:9px;display:flex;align-items:center;justify-content:center;font-size:16px;box-shadow:0 0 16px rgba(0,217,126,0.3)}
@@ -204,6 +206,98 @@ select.fi option{background:var(--d2);color:var(--text)}
   .right-col{position:static}
   .bh-amount{font-size:42px}
   .bh-stats{grid-template-columns:repeat(3,1fr)}
+}
+
+/* ── SAFARI / iOS PERFORMANCE FIXES ──
+   backdrop-filter + filter:blur on animated elements = GPU overload on iPhone.
+   Disable the expensive animated orbs on mobile/low-power devices.           */
+@media(max-width:768px){
+  /* Kill the GPU-heavy animated orbs entirely on mobile */
+  .bg-orb{display:none}
+  /* Disable scan line animation on mobile (saves repaints) */
+  .scan-line{display:none}
+  /* Reduce backdrop-filter cost on nav */
+  .topnav{backdrop-filter:none;-webkit-backdrop-filter:none;background:rgba(6,13,10,0.97)}
+  /* Disable will-change and 3D on hover animations (Safari bug) */
+  .submit-btn:hover,.done-btn:hover{transform:none}
+
+  /* ── TOPBAR ── */
+  .topnav{height:54px;padding:0 16px;gap:8px}
+  .nav-divider{display:none}
+  .nav-page-title{display:none}
+  .nav-name{font-size:16px}
+  .nav-ico{width:30px;height:30px;font-size:14px;box-shadow:none}
+  .back-btn{padding:7px 12px;font-size:12px;gap:5px}
+  .back-btn::before{content:'‹ '}
+
+  /* ── PAGE WRAP ── */
+  .page-wrap{padding:16px 14px 40px}
+
+  /* ── BALANCE HERO ── */
+  .balance-hero{padding:20px 18px}
+  .bh-top{margin-bottom:16px;align-items:center}
+  .bh-amount{font-size:36px;letter-spacing:-2px}
+  .bh-label{font-size:10px}
+  .bh-status-pill{padding:5px 10px;font-size:10px}
+  /* Stats: 3 equal columns, more compact */
+  .bh-stats{gap:8px}
+  .bh-stat{padding:11px 10px}
+  .bh-stat-val{font-size:16px}
+  .bh-stat-lbl{font-size:9px}
+
+  /* ── AMOUNT INPUT ── */
+  .amt-input{font-size:28px}
+  .amt-prefix{font-size:22px}
+  /* Quick buttons: wrap naturally, equal size */
+  .quick-row{gap:6px}
+  .qb{padding:7px 12px;font-size:12px;flex:1;min-width:calc(33% - 6px);text-align:center}
+
+  /* ── METHOD TABS ── */
+  .method-tabs{gap:0;overflow-x:auto;-webkit-overflow-scrolling:touch;scroll-snap-type:x mandatory}
+  .mtab{min-width:64px;padding:7px 6px;font-size:10px;scroll-snap-align:start}
+  .mtab-icon{font-size:14px}
+
+  /* ── BANK FORM ROWS → single column ── */
+  .frow{grid-template-columns:1fr}
+  .ifsc-row{flex-direction:column;align-items:stretch}
+  .verify-btn{width:100%;padding:12px}
+
+  /* ── CARD ── */
+  .card-hdr{padding:14px 16px}
+  .card-body{padding:16px}
+
+  /* ── SUMMARY CARD → move to logical order after form ── */
+  .summary-card .sc-body{padding:14px 16px}
+  .submit-wrap{padding:0 16px 16px}
+  .sc-total-val{font-size:20px}
+
+  /* ── HISTORY ITEMS ── */
+  .hist-item{gap:10px;padding:12px 0}
+  .hist-ico{width:36px;height:36px;font-size:14px;border-radius:10px}
+  .hist-amt{font-size:13px}
+  .hist-name{font-size:12px}
+
+  /* ── SUCCESS CARD ── */
+  .success-card{padding:28px 20px;border-radius:20px}
+  .success-amount{font-size:34px}
+
+  /* ── TOAST: full width pinned bottom ── */
+  .toast{
+    left:14px;right:14px;bottom:16px;
+    transform:translateY(100px);
+    min-width:0;max-width:none;
+    width:auto;
+  }
+  .toast.show{transform:translateY(0)}
+}
+
+/* Extra small screens */
+@media(max-width:380px){
+  .bh-amount{font-size:30px}
+  .bh-stats{grid-template-columns:1fr 1fr 1fr}
+  .bh-stat-val{font-size:14px}
+  .qb{font-size:11px;padding:6px 8px}
+  .amt-input{font-size:24px}
 }
 </style>
 </head>
