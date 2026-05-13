@@ -405,7 +405,15 @@ body{font-family:'Outfit',sans-serif;background:var(--dark);color:var(--text);mi
   .quick-stats{grid-template-columns:1fr 1fr}
   .earn-grid{grid-template-columns:1fr 1fr}
   .aj-grid{grid-template-columns:1fr}
-  .greeting-card{flex-direction:column;gap:14px;align-items:flex-start}
+  /* Keep greeting as row — badge stays on right */
+  .greeting-card{flex-direction:row;align-items:center;padding:16px 16px;gap:10px}
+  .greet-left{flex:1;min-width:0}
+  .greet-left h2{font-size:17px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .greet-left p{font-size:11px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+  .greet-right{flex-shrink:0;align-items:flex-end;gap:4px}
+  .shift-badge{font-size:11px;padding:5px 10px;white-space:nowrap}
+  .time-display{font-size:15px}
+  .date-display{font-size:10px}
 }
 </style>
 </head>
