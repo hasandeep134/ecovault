@@ -330,6 +330,18 @@ body{font-family:'Outfit',sans-serif;background:var(--dark);color:var(--text);mi
   .toast-fixed{bottom:16px;min-width:0;width:calc(100vw - 28px);left:14px;transform:translateX(0) translateY(100px)}
   .toast-fixed.show{transform:translateX(0) translateY(0)}
 }
+
+/* ── Professional crown icon ── */
+.sb-crown-svg{width:14px;height:10px;flex-shrink:0;color:var(--gold)}
+
+/* ── Mobile: hide LIVE pill, show only refresh ── */
+@media(max-width:768px){
+  .live-pill{display:none!important}
+  /* Sidebar: ensure Admin Home button is always visible without scrolling */
+  .sidebar{display:flex;flex-direction:column}
+  .sb-nav{flex:1;overflow-y:auto;min-height:0}
+  .sb-bottom{flex-shrink:0;padding:10px 12px 14px}
+}
 </style>
 </head>
 <body>
@@ -348,7 +360,7 @@ body{font-family:'Outfit',sans-serif;background:var(--dark);color:var(--text);mi
       <div class="sb-ico">♻</div>
       <div class="sb-name">Eco<span>Vault</span></div>
     </div>
-    <div class="sb-badge">👑 ADMIN</div>
+    <div class="sb-badge"><svg class="sb-crown-svg" viewBox="0 0 20 14" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true"><path d="M1 13h18M1 13L3.5 5l4 3.5L10 1l2.5 7.5 4-3.5L19 13" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" stroke-linejoin="round"/></svg> ADMIN</div>
   </div>
   <nav class="sb-nav">
     <div class="sb-sec">Admin Panels</div>
