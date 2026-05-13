@@ -1282,6 +1282,7 @@ async function submitRequest(event) {
     formData.append('imageUpload', fileInput.files[0]);
     formData.append('garbageType', type);
     formData.append('address', address);
+    formData.append('severity', document.getElementById('severity').value);
     
     // FIX: Use stored numeric pin coordinates instead of parsing display text
     formData.append('lat', pinLat);
