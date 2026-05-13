@@ -1045,12 +1045,12 @@ window.addEventListener('load', async () => {
 });
 
 // ── SEVERITY MAPPER ── Maps DB severity string → { sev, sevKey }
-// Only 3 tiers: High (h), Medium (m), Low (l). Critical is treated as High.
+// 3 tiers only: High (h) = red, Medium (m) = yellow, Low (l) = green
 function mapSeverity(raw) {
-  const s = (raw || 'Medium').trim();
-  if (s === 'High'   || s === 'Critical') return { sev: 'High',   sevKey: 'h' };
-  if (s === 'Low')                         return { sev: 'Low',    sevKey: 'l' };
-  return                                          { sev: 'Medium', sevKey: 'm' };
+  const s = (raw || '').trim().toLowerCase();
+  if (s === 'high')   return { sev: 'High',   sevKey: 'h' };
+  if (s === 'low')    return { sev: 'Low',    sevKey: 'l' };
+  return                     { sev: 'Medium', sevKey: 'm' };
 }
 
 async function fetchTasks() {
