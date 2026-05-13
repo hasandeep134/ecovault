@@ -188,8 +188,7 @@ tr:last-child td{border-bottom:none}
   .topbar{padding:0 14px;gap:8px}
   .tb-title{font-size:14px}
   .tb-sub{font-size:10px}
-  .btn-ref{padding:7px 10px;font-size:11px;min-width:0;flex-shrink:0}
-  .btn-ref .ref-text{display:none}
+  .btn-ref span.ref-text{display:none}
 
   /* Stats: 2×2 grid on mobile */
   .stats-row{grid-template-columns:repeat(2,1fr);gap:10px;margin-bottom:16px}
@@ -238,9 +237,9 @@ tr:last-child td{border-bottom:none}
 @media(max-width:768px){
   .live-pill{display:none!important}
   /* Sidebar: ensure Admin Home button is always visible without scrolling */
-  .sidebar{display:flex!important;flex-direction:column!important;overflow:hidden}
-  .sb-nav{flex:1;overflow-y:auto;min-height:0;overflow-x:hidden}
-  .sb-bottom{flex-shrink:0!important;padding:10px 12px 16px;background:rgba(10,22,16,0.98);border-top:1px solid rgba(0,217,126,0.1)}
+  .sidebar{display:flex;flex-direction:column}
+  .sb-nav{flex:1;overflow-y:auto;min-height:0}
+  .sb-bottom{flex-shrink:0;padding:10px 12px 14px}
 }
 </style>
 </head>
@@ -284,7 +283,7 @@ tr:last-child td{border-bottom:none}
     </div>
     <div class="tb-right">
       <!-- <div class="live-pill"><div class="live-d"></div>LIVE</div> -->
-      <button class="btn-ref" onclick="loadUsers()">↻ <span class="ref-text">Refresh</span></button>
+      <button class="btn-ref" onclick="loadUsers()">↻ Refresh</button>
     </div>
   </div>
 

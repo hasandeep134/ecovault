@@ -196,15 +196,15 @@ body{font-family:'Outfit',sans-serif;background:var(--dark);color:var(--text);mi
   .admin-chip{display:none}
   .admin-name-tag{display:none}
 
-  /* Sign out: show text on mobile */
+  /* Sign out: icon-only pill, more refined */
   .btn-signout{
-    padding:7px 12px;border-radius:8px;
-    display:flex;align-items:center;gap:6px;
-    font-size:12px;
+    padding:0;width:36px;height:36px;border-radius:50%;
+    display:flex;align-items:center;justify-content:center;
+    font-size:16px;line-height:1;
     border:1px solid rgba(239,68,68,0.3);
     background:rgba(239,68,68,0.08);
   }
-  .btn-signout .so-text{display:inline}
+  .btn-signout .so-text{display:none}
 
   /* Hero padding */
   .hero{padding:28px 16px 24px}
@@ -253,7 +253,7 @@ body{font-family:'Outfit',sans-serif;background:var(--dark);color:var(--text);mi
   <div class="brand">
     <div class="brand-ico">♻</div>
     <div class="brand-name">Eco<span>Vault</span></div>
-    <div class="admin-chip"><div class="live-dot"></div>ADMIN</div>
+    <div class="admin-chip"><div class="live-dot"></div>👑 ADMIN</div>
   </div>
   <div class="topbar-right">
     <div class="admin-name-tag">Logged in as <strong id="adminNameDisplay">Administrator</strong></div>
